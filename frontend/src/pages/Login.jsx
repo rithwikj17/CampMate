@@ -27,10 +27,9 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // In production, use real API call
-      // const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      const response = await mockLogin(email, password);
-      login(response.data.token, response.data.user);
+      // Connect to real backend API securely through Vite Proxy
+      const response = await axios.post('/api/auth/login', { email, password });
+      login(response.data.data.accessToken, response.data.data.user);
     } catch (error) {
       console.error("Login failed", error);
       alert("Invalid credentials. Try any email and password for demo.");

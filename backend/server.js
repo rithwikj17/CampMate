@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const clubRoutes = require('./routes/clubs');
 const locationRoutes = require('./routes/locations');
+const pathRoutes = require('./routes/paths');
 const aiRoutes = require('./routes/ai');
 const userRoutes = require('./routes/users');
 const notificationRoutes = require('./routes/notifications');
@@ -27,6 +28,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/paths', pathRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
 

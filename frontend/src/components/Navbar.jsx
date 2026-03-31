@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Tent, Bell, Menu, X, User, LogOut, Calendar, Settings } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -12,8 +13,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const profileRef = useRef(null);
 
-  // Attempt to read user from local storage
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -43,8 +43,7 @@ const Navbar = () => {
   }, [user]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     setIsProfileOpen(false);
     navigate('/login');
   };

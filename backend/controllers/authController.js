@@ -5,8 +5,8 @@ const { sendSuccess, sendCreated, sendError } = require('../utils/response');
 
 const generateTokens = (user) => {
     const payload = { id: user.id, role: user.role, name: user.name };
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'super_secret', { expiresIn: '15m' });
-    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh_secret', { expiresIn: '7d' });
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'super_secret_jwt_key_campmate', { expiresIn: '7d' });
+    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'refresh_secret_key_campmate', { expiresIn: '7d' });
     return { accessToken, refreshToken };
 };
 
