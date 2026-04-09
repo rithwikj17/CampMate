@@ -13,6 +13,11 @@ router.get('/:id', [
     param('id').isInt().withMessage('Valid club ID required')
 ], validate, clubController.getClubById);
 
+// Get all events for a specific club (public)
+router.get('/:id/events', [
+    param('id').isInt().withMessage('Valid club ID required')
+], validate, clubController.getClubEvents);
+
 // Join club
 router.post('/:id/join', verifyToken, [
     param('id').isInt().withMessage('Valid club ID required')

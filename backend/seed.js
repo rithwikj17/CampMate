@@ -51,15 +51,22 @@ async function seed() {
     console.log('⛺ Seeding Clubs...');
     const clubsRes = await pool.query(`
       INSERT INTO clubs (club_name, description, created_by) VALUES 
-        ('Coding Club', 'A community of developers building cool things. Join us for hackathons and workshops!', $1),
-        ('Cultural Club', 'Embracing art, dance, drama, and campus festivals. Creativity unleashed.', $1),
-        ('Sports Club', 'Promoting fitness and organizing inter-college tournaments.', $1)
+        ('Coding Club', 'A community of passionate developers building cool things. Join us for hackathons and masterclasses!', $1),
+        ('CCB', 'The heartbeat of cultural events at BVRIT! We orchestrate massive college fests, electrifying events, and serve as the vibrant soul of campus life!', $1),
+        ('CCB Dance Crew', 'Step up and own the stage! Our elite dance crew represents BVRIT across all major competitions. Bring your rhythm and let''s groove!', $1),
+        ('Natyanandhana', 'Embrace grace and tradition! We are dedicated exclusively to the breathtaking art of classical dance, preserving heritage through mesmerizing performances.', $1),
+        ('Musically BVRIT', 'Find your rhythm and raise your voice! The official hub for all vocalists and musicians. From battle of the bands to soulful acoustic nights, we do it all!', $1),
+        ('Garuda', 'Master the art of defense and infiltration! Garuda is our elite cyber security club dedicated to ethical hacking, cryptography, and securing the digital frontier.', $1),
+        ('E-Cell', 'Ignite your startup journey! The Entrepreneurship Cell (E-Cell) fosters innovation, connects you with industry leaders, and helps turn your visionary ideas into successful businesses.', $1),
+        ('MHC (Mental Health Club)', 'Prioritize your well-being! The Mental Health Club (MHC) provides a safe, supportive space for students to destress, find balance, and promote mindfulness across campus.', $1),
+        ('Chalana Chitram BVRIT', 'Lights, camera, action! Chalana Chitram BVRIT is your creative outlet for all things film making. From scriptwriting to directing, join us in bringing incredible stories to the big screen.', $1),
+        ('Sports Club', 'Unleash your inner champion! Promoting fitness, organizing inter-college tournaments, and dominating the field.', $1)
       RETURNING id, club_name;
     `, [admin.id]);
     
     const clubs = clubsRes.rows;
     const codingClub = clubs.find(c => c.club_name === 'Coding Club');
-    const culturalClub = clubs.find(c => c.club_name === 'Cultural Club');
+    const culturalClub = clubs.find(c => c.club_name === 'CCB');
     const sportsClub = clubs.find(c => c.club_name === 'Sports Club');
 
     // 4. Insert Club Members
@@ -84,26 +91,6 @@ async function seed() {
     // Format dates to YYYY-MM-DD for Postgres
     const formatDate = (d) => d.toISOString().split('T')[0];
 
-    const eventsRes = await pool.query(`
-      INSERT INTO events (title, description, date, time, venue, organizer_id, category, max_participants) VALUES 
-        ('Hackathon 2026', 'A 24-hour coding sprint. Build next-gen web apps and win prizes.', $1, '09:00:00', 'Main Auditorium', $2, 'Technical', 100),
-        ('AI Workshop', 'Hands-on session on building RAG pipelines with OpenAI.', $3, '14:00:00', 'Computer Lab 3', $2, 'Workshop', 50),
-        ('Annual Fest Dance Off', 'Inter-department dance competition. Bring your best moves!', $4, '17:30:00', 'Open Air Theatre', $5, 'Cultural', NULL),
-        ('Cricket Tournament Finale', 'The final showdown between CSE and ECE departments.', $6, '15:00:00', 'Main Ground', $7, 'Sports', 200),
-        ('Resume Review Session', 'Get your resume reviewed by industry experts before placements.', $8, '10:00:00', 'Seminar Hall', $2, 'Other', 60)
-      RETURNING id;
-    `, [
-      formatDate(event1Date), codingClub.id, 
-      formatDate(event2Date), culturalClub.id, // cultural club runs fest (wait, AI workshop by coding club)
-      formatDate(event3Date), culturalClub.id, 
-      formatDate(event4Date), sportsClub.id,
-      formatDate(event5Date) // resume review by coding club
-    ]);
-    
-    // Fix Organizer IDs manually via array parameters mapping:
-    // Actually, let's just do multiple queries to be safe and clear.
-    await pool.query('DELETE FROM events;'); // Reset from the batch above as the params got messy
-    
     const eventsInserted = await pool.query(`
       INSERT INTO events (title, description, date, time, venue, organizer_id, category, max_participants) VALUES 
         ('Hackathon 2026', 'A 24-hour coding sprint. Build next-gen web apps and win prizes.', $1, '09:00:00', 'Main Auditorium', $2, 'Technical', 100),

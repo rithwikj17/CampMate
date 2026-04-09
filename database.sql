@@ -64,8 +64,15 @@ INSERT INTO users (name, email, password_hash, role) VALUES
 ('Jane Smith', 'jane.club@campmate.edu', '$2b$10$EpR0.OItQc89Uquv59T53u0.A2V7UUSyO.oMhY16oOaO9Xz8fCqOq', 'Club Member');
 
 INSERT INTO clubs (club_name, description) VALUES 
-('Cultural Club BVRIT', 'A club for culturals.'),
-('Coding Brigades BVRIT', 'Weekly coding challenges, hackathons, and tech talks.');
+('CCB', 'The heartbeat of cultural events at BVRIT! We orchestrate massive college fests, electrifying events, and serve as the vibrant soul of campus life!'),
+('CCB Dance Crew', 'Step up and own the stage! Our elite dance crew represents BVRIT across all major competitions. Bring your rhythm and let''s groove!'),
+('Natyanandhana', 'Embrace grace and tradition! We are dedicated exclusively to the breathtaking art of classical dance, preserving heritage through mesmerizing performances.'),
+('Musically BVRIT', 'Find your rhythm and raise your voice! The official hub for all vocalists and musicians. From battle of the bands to soulful acoustic nights, we do it all!'),
+('Garuda', 'Master the art of defense and infiltration! Garuda is our elite cyber security club dedicated to ethical hacking, cryptography, and securing the digital frontier.'),
+('E-Cell', 'Ignite your startup journey! The Entrepreneurship Cell (E-Cell) fosters innovation, connects you with industry leaders, and helps turn your visionary ideas into successful businesses.'),
+('MHC (Mental Health Club)', 'Prioritize your well-being! The Mental Health Club (MHC) provides a safe, supportive space for students to destress, find balance, and promote mindfulness across campus.'),
+('Chalana Chitram BVRIT', 'Lights, camera, action! Chalana Chitram BVRIT is your creative outlet for all things film making. From scriptwriting to directing, join us in bringing incredible stories to the big screen.'),
+('Coding Brigades BVRIT', 'Innovate, build, and conquer! Weekly coding challenges, intense hackathons, and tech talks from industry experts.');
 
 INSERT INTO club_members (club_id, user_id, role) VALUES 
 (2, 3, 'Admin');
