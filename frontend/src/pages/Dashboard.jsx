@@ -19,7 +19,7 @@ const Dashboard = () => {
 
   const recentAnnouncements = [
     { id: 1, club: 'Robotics Club', message: 'Meeting postponed to Friday 5 PM.', time: '2h ago' },
-    { id: 2, club: 'Cultural Society', message: 'Auditions for the annual play are open!', time: '1d ago' },
+    { id: 2, club: 'CCB', message: 'Auditions for the annual play are open!', time: '1d ago' },
   ];
 
   return (

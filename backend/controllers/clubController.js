@@ -114,4 +114,28 @@ const createAnnouncement = async (req, res, next) => {
     }
 };
 
-module.exports = { getAllClubs, getClubById, joinClub, leaveClub, getClubMembers, createAnnouncement };
+const getClubEvents = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // Verify club exists
+        const clubResult = await db.query(
+            'SELECT id, club_name FROM clubs WHERE id = $1 AND deleted_at IS NULL',
+            [id]
+        );
+        if (clubResult.rows.length === 0) return sendError(res, 404, 'Club not found');
+
+        const events = await db.query(`
+            SELECT id, title, description, date, time, venue, category, poster_url, is_cancelled
+            FROM events
+            WHERE organizer_id = $1 AND deleted_at IS NULL
+            ORDER BY date DESC
+        `, [id]);
+
+        return sendSuccess(res, 'Club events fetched successfully', events.rows);
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { getAllClubs, getClubById, joinClub, leaveClub, getClubMembers, createAnnouncement, getClubEvents };
