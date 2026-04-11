@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -266,8 +267,11 @@ const LocationForm = ({ initial, allLocations, onSave, onCancel, isSaving }) => 
   const [form, setForm] = useState({
     location_name: '', description: '', category: 'Academic',
     floor_number: '', image_url: '', building_id: '', ...initial,
+    opening_hours_text: initial?.opening_hours?.text || '',
+    is_accessible: initial?.is_accessible || false,
   });
-  const buildings = allLocations.filter(l => l.category === 'Building');
+  const BUILDINGS = ['Building', 'Academic', 'Hostel', 'Sports', 'Admin'];
+  const buildings = allLocations.filter(l => BUILDINGS.includes(l.category));
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
@@ -284,23 +288,19 @@ const LocationForm = ({ initial, allLocations, onSave, onCancel, isSaving }) => 
           {Object.keys(CATEGORY_META).map(c => <option key={c} value={c}>{CATEGORY_META[c].label}</option>)}
         </select>
       </div>
-      {form.category === 'Room' && (
-        <>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Floor Number</label>
-            <input type="number" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              value={form.floor_number} onChange={e => set('floor_number', e.target.value)} placeholder="e.g. 2" min={0} />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Inside Building</label>
-            <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
-              value={form.building_id} onChange={e => set('building_id', e.target.value)}>
-              <option value="">— Select building —</option>
-              {buildings.map(b => <option key={b.id} value={b.id}>{b.location_name}</option>)}
-            </select>
-          </div>
-        </>
-      )}
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 mb-1">Floor Number (Optional)</label>
+        <input type="number" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          value={form.floor_number} onChange={e => set('floor_number', e.target.value)} placeholder="e.g. 2" min={0} />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 mb-1">Inside Building (Optional)</label>
+        <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          value={form.building_id} onChange={e => set('building_id', e.target.value)}>
+          <option value="">— Select building (leave blank if standalone) —</option>
+          {buildings.map(b => <option key={b.id} value={b.id}>{b.location_name}</option>)}
+        </select>
+      </div>
       <div>
         <label className="block text-xs font-semibold text-gray-500 mb-1">Description</label>
         <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 resize-none"
@@ -311,6 +311,16 @@ const LocationForm = ({ initial, allLocations, onSave, onCancel, isSaving }) => 
         <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
           value={form.image_url} onChange={e => set('image_url', e.target.value)} placeholder="https://..." />
       </div>
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 mb-1">Opening Hours (Optional)</label>
+        <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+          value={form.opening_hours_text} onChange={e => set('opening_hours_text', e.target.value)} placeholder="e.g. 9:00 AM - 5:00 PM" />
+      </div>
+      <label className="flex items-center gap-2 cursor-pointer pb-2 pt-1">
+        <input type="checkbox" className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+          checked={form.is_accessible} onChange={e => set('is_accessible', e.target.checked)} />
+        <span className="text-sm font-semibold text-gray-700">♿ Wheelchair Accessible</span>
+      </label>
       <div className="flex gap-2 pt-1">
         <button disabled={isSaving || !form.location_name} onClick={() => onSave(form)}
           className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-semibold py-2 rounded-lg flex items-center justify-center gap-1 transition-colors">
@@ -373,6 +383,7 @@ const DirectionsPanel = ({ steps, summary, fromName, toName, onClose }) => (
 
 const CampusMap = () => {
   const { user, token } = useAuth();
+  const [searchParams] = useSearchParams();
   const isAdmin = user?.role === 'Administrator';
 
   const [viewState, setViewState] = useState({ ...CAMPUS_CENTER, zoom: 17, pitch: 0, bearing: 0 });
@@ -428,6 +439,22 @@ const CampusMap = () => {
 
   useEffect(() => { fetchLocations(); fetchPaths(); }, [fetchLocations, fetchPaths]);
 
+  const pinId = searchParams.get('pin');
+  useEffect(() => {
+    if (pinId && locations.length > 0 && !popupInfo) {
+      const targetLoc = locations.find(l => l.id.toString() === pinId);
+      if (targetLoc) {
+        setPopupInfo(targetLoc);
+        setViewState(prev => ({
+          ...prev,
+          longitude: Number(targetLoc.longitude),
+          latitude: Number(targetLoc.latitude),
+          zoom: 18
+        }));
+      }
+    }
+  }, [pinId, locations]);
+
   // ── Routing ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -481,6 +508,7 @@ const CampusMap = () => {
         longitude: editingLoc ? editingLoc.longitude : pendingPin.lng,
         floor_number: form.floor_number !== '' ? Number(form.floor_number) : null,
         building_id:  form.building_id  !== '' ? Number(form.building_id)  : null,
+        opening_hours: form.opening_hours_text ? { text: form.opening_hours_text } : null,
       };
       if (editingLoc?.id) {
         await axios.put(`/api/locations/${editingLoc.id}`, payload, { headers: authHeader });
@@ -956,6 +984,16 @@ const CampusMap = () => {
                     {popupInfo.floor_number && <span className="text-xs text-gray-500">Floor {popupInfo.floor_number}</span>}
                   </div>
                   {popupInfo.description && <p className="text-gray-600 text-xs mb-3">{popupInfo.description}</p>}
+                  {(popupInfo.opening_hours?.text || popupInfo.is_accessible) && (
+                    <div className="flex flex-col gap-1 mb-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      {popupInfo.opening_hours?.text && (
+                        <div className="text-xs text-gray-700 font-medium whitespace-pre-wrap">⏱️ {popupInfo.opening_hours.text}</div>
+                      )}
+                      {popupInfo.is_accessible && (
+                        <div className="text-xs text-green-700 font-medium">♿ Wheelchair Accessible</div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-2 mb-2">
                     <button className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
                       onClick={() => { setFromLoc(popupInfo); setActiveTab('navigate'); setPopupInfo(null); }}>Start here</button>

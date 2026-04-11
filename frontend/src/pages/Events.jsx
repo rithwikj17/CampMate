@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Calendar as CalendarIcon, MapPin, Clock, Search, Filter, Plus, X, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar as CalendarIcon, MapPin, Clock, Search, Filter, Plus, X, CheckCircle, Navigation } from 'lucide-react';
+import axios from 'axios';
 
 const INITIAL_EVENTS = [
   { id: 1, title: 'Annual Hackathon', description: '24-hour university-wide hackathon focusing on AI.', date: '2026-05-10', time: '09:00', venue: 'Main Auditorium', category: 'Technology', organizer: 'Coding Club' },
@@ -23,14 +25,14 @@ const Toast = ({ message, onDone }) => {
 };
 
 // ── Create Event Modal ────────────────────────────────────────────────────────
-const CreateEventModal = ({ onClose, onCreate }) => {
-  const [form, setForm] = useState({ title: '', description: '', date: '', time: '', venue: '', category: 'Technology', organizer: '' });
+const CreateEventModal = ({ onClose, onCreate, locations }) => {
+  const [form, setForm] = useState({ title: '', description: '', date: '', time: '', venue: '', location_id: '', category: 'Technology', organizer: '' });
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title || !form.date || !form.venue) return;
-    onCreate({ ...form, id: Date.now() });
+    onCreate({ ...form, id: Date.now(), location_id: form.location_id ? Number(form.location_id) : null });
     onClose();
   };
 
@@ -66,10 +68,20 @@ const CreateEventModal = ({ onClose, onCreate }) => {
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Venue *</label>
-            <input required type="text" placeholder="e.g. Main Auditorium" value={form.venue} onChange={set('venue')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Venue Name *</label>
+              <input required type="text" placeholder="e.g. Main Auditorium" value={form.venue} onChange={set('venue')}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pin on Map (Optional)</label>
+              <select value={form.location_id} onChange={set('location_id')}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors bg-white">
+                <option value="">— No Map Pin —</option>
+                {locations?.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
+              </select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -125,9 +137,16 @@ const EventDetailModal = ({ event, registered, onRegister, onClose }) => (
             <div className="p-2 bg-gray-50 rounded-lg"><Clock size={16} className="text-gray-700" /></div>
             <span>{event.time}</span>
           </div>
-          <div className="flex items-center gap-3 text-gray-600">
-            <div className="p-2 bg-gray-50 rounded-lg"><MapPin size={16} className="text-gray-700" /></div>
-            <span>{event.venue}</span>
+          <div className="flex items-center justify-between text-gray-600">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-50 rounded-lg"><MapPin size={16} className="text-gray-700" /></div>
+              <span>{event.venue}</span>
+            </div>
+            {event.location_id && (
+              <span onClick={() => window.open(`/map?pin=${event.location_id}`, '_self')} className="flex items-center gap-1 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+                <Navigation size={12} /> View Map
+              </span>
+            )}
           </div>
         </div>
         <div className="pt-2 border-t border-gray-100 text-xs text-gray-500">
@@ -156,13 +175,23 @@ const EventDetailModal = ({ event, registered, onRegister, onClose }) => (
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const Events = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [events, setEvents] = useState(INITIAL_EVENTS);
+  const [locations, setLocations] = useState([]);
   const [registeredIds, setRegisteredIds] = useState(new Set([1])); // event 1 pre-registered
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    // Basic fetch locations for the dropdown
+    axios.get('/api/locations')
+      .then(res => setLocations(res.data.data || []))
+      .catch(console.error);
+    // Note: Events are still using static INITIAL_EVENTS mock.
+  }, []);
 
   const canCreate = user?.role === 'Administrator' || user?.role === 'Club Member';
   const categories = ['All', 'Technology', 'Cultural', 'Business'];
@@ -307,7 +336,7 @@ const Events = () => {
       )}
 
       {showCreateModal && (
-        <CreateEventModal onClose={() => setShowCreateModal(false)} onCreate={handleCreate} />
+        <CreateEventModal locations={locations} onClose={() => setShowCreateModal(false)} onCreate={handleCreate} />
       )}
       {selectedEvent && (
         <EventDetailModal

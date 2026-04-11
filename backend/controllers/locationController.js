@@ -19,17 +19,17 @@ const getAllLocations = async (req, res, next) => {
 // POST /api/locations — admin creates a new location (pin)
 const createLocation = async (req, res, next) => {
     try {
-        const { location_name, latitude, longitude, description, category, floor_number, image_url, building_id } = req.body;
+        const { location_name, latitude, longitude, description, category, floor_number, image_url, building_id, opening_hours, is_accessible } = req.body;
 
         if (!location_name || !latitude || !longitude || !category) {
             return res.status(400).json({ success: false, message: 'name, latitude, longitude, and category are required.' });
         }
 
         const result = await db.query(
-            `INSERT INTO campus_locations (location_name, latitude, longitude, description, category, floor_number, image_url, building_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO campus_locations (location_name, latitude, longitude, description, category, floor_number, image_url, building_id, opening_hours, is_accessible)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
              RETURNING *`,
-            [location_name, latitude, longitude, description || null, category, floor_number || null, image_url || null, building_id || null]
+            [location_name, latitude, longitude, description || null, category, floor_number || null, image_url || null, building_id || null, opening_hours || null, is_accessible || false]
         );
 
         return sendSuccess(res, 'Location created successfully', result.rows[0], 201);
@@ -42,7 +42,7 @@ const createLocation = async (req, res, next) => {
 const updateLocation = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { location_name, latitude, longitude, description, category, floor_number, image_url, building_id } = req.body;
+        const { location_name, latitude, longitude, description, category, floor_number, image_url, building_id, opening_hours, is_accessible } = req.body;
 
         const result = await db.query(
             `UPDATE campus_locations
@@ -53,10 +53,12 @@ const updateLocation = async (req, res, next) => {
                  category      = COALESCE($5, category),
                  floor_number  = COALESCE($6, floor_number),
                  image_url     = COALESCE($7, image_url),
-                 building_id   = COALESCE($8, building_id)
-             WHERE id = $9
+                 building_id   = COALESCE($8, building_id),
+                 opening_hours = COALESCE($9, opening_hours),
+                 is_accessible = COALESCE($10, is_accessible)
+             WHERE id = $11
              RETURNING *`,
-            [location_name, latitude, longitude, description, category, floor_number, image_url, building_id, id]
+            [location_name, latitude, longitude, description, category, floor_number, image_url, building_id, opening_hours, is_accessible, id]
         );
 
         if (result.rows.length === 0) {
