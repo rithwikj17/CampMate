@@ -187,6 +187,7 @@ function findRoute(paths, fromLoc, toLoc) {
       type: 'FeatureCollection',
       features: [{
         type: 'Feature',
+        properties: { isRoute: true },
         geometry: {
           type: 'LineString',
           coordinates: fullCoords.map(p => [p.lng, p.lat])
@@ -968,10 +969,10 @@ const CampusMap = () => {
             {showPaths && paths.length > 0 && (
               <Source id="all-paths" type="geojson" data={pathsGeoJSON}>
                 <Layer id="paths-casing" type="line"
-                  paint={{ 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': route ? 0.2 : 0.6 }}
+                  paint={{ 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.6 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
                 <Layer id="paths-line" type="line"
-                  paint={{ 'line-color': '#f59e0b', 'line-width': 3, 'line-opacity': route ? 0.3 : 0.9, 'line-dasharray': [3, 1] }}
+                  paint={{ 'line-color': '#f59e0b', 'line-width': 3, 'line-opacity': 0.9 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
               </Source>
             )}
@@ -980,10 +981,10 @@ const CampusMap = () => {
             {route?.geojson && (
               <Source id="route" type="geojson" data={route.geojson}>
                 <Layer id="route-casing" type="line"
-                  paint={{ 'line-color': '#ffffff', 'line-width': 14, 'line-opacity': 0.9 }}
+                  paint={{ 'line-color': '#1e3a8a', 'line-width': 12, 'line-opacity': 1 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
                 <Layer id="route-line" type="line"
-                  paint={{ 'line-color': '#2563eb', 'line-width': 8, 'line-opacity': 1, 'line-dasharray': [0.1, 1.5] }}
+                  paint={{ 'line-color': '#3b82f6', 'line-width': 6, 'line-opacity': 1 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
               </Source>
             )}
