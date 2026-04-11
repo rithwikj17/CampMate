@@ -187,10 +187,11 @@ function findRoute(paths, fromLoc, toLoc) {
       type: 'FeatureCollection',
       features: [{
         type: 'Feature',
+        id: 'active_route',
         properties: { isRoute: true },
         geometry: {
           type: 'LineString',
-          coordinates: fullCoords.map(p => [p.lng, p.lat])
+          coordinates: fullCoords.map(p => [Number(p.lng), Number(p.lat)])
         }
       }]
     },
@@ -222,10 +223,11 @@ function pathsToGeoJSON(paths, highlightId) {
         : p.coordinates;
       return {
         type: 'Feature',
+        id: `path_${p.id}`,
         properties: { id: p.id, name: p.name, highlight: p.id === highlightId },
         geometry: {
           type: 'LineString',
-          coordinates: coords.map(c => [c.lng, c.lat])
+          coordinates: coords.map(c => [Number(c.lng), Number(c.lat)])
         }
       };
     })
@@ -968,10 +970,10 @@ const CampusMap = () => {
             {/* Saved paths layer */}
             {showPaths && paths.length > 0 && (
               <Source id="all-paths" type="geojson" data={pathsGeoJSON}>
-                <Layer id="paths-casing" type="line"
+                <Layer id="paths-casing" source="all-paths" type="line"
                   paint={{ 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.6 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
-                <Layer id="paths-line" type="line"
+                <Layer id="paths-line" source="all-paths" type="line"
                   paint={{ 'line-color': '#f59e0b', 'line-width': 3, 'line-opacity': 0.9 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
               </Source>
@@ -979,12 +981,12 @@ const CampusMap = () => {
 
             {/* Route line */}
             {route?.geojson && (
-              <Source id="route" type="geojson" data={route.geojson}>
-                <Layer id="route-casing" type="line"
-                  paint={{ 'line-color': '#1e3a8a', 'line-width': 12, 'line-opacity': 1 }}
+              <Source id="route-src" type="geojson" data={route.geojson}>
+                <Layer id="route-casing" source="route-src" type="line"
+                  paint={{ 'line-color': '#ffffff', 'line-width': 12, 'line-opacity': 0.9 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
-                <Layer id="route-line" type="line"
-                  paint={{ 'line-color': '#3b82f6', 'line-width': 6, 'line-opacity': 1 }}
+                <Layer id="route-line" source="route-src" type="line"
+                  paint={{ 'line-color': '#1d4ed8', 'line-width': 6, 'line-opacity': 1 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
               </Source>
             )}
