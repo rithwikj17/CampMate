@@ -8,7 +8,8 @@ import {
   MapPin, Navigation, Info, Plus, Trash2, Edit3,
   X, ChevronRight, Building2, BedDouble, Trees,
   ParkingCircle, DoorOpen, Layers, Search, ArrowRight,
-  CheckCircle, AlertCircle, Loader2, Route, Pencil, Eye
+  CheckCircle, AlertCircle, Loader2, Route, Pencil, Eye,
+  BookOpen, Coffee, FlaskConical, Trophy, Briefcase
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -18,9 +19,14 @@ import { useAuth } from '../context/AuthContext';
 const CAMPUS_CENTER = { longitude: 78.2571511, latitude: 17.7252584 };
 
 const CATEGORY_META = {
+  Academic: { color: '#2563eb', bg: '#dbeafe', border: '#2563eb', icon: BookOpen, label: 'Academic' },
+  Hostel:   { color: '#7c3aed', bg: '#f5f3ff', border: '#7c3aed', icon: BedDouble, label: 'Hostel' },
+  Canteen:  { color: '#ea580c', bg: '#ffedd5', border: '#ea580c', icon: Coffee, label: 'Canteen' },
+  Lab:      { color: '#0891b2', bg: '#ecfeff', border: '#0891b2', icon: FlaskConical, label: 'Lab' },
+  Sports:   { color: '#16a34a', bg: '#f0fdf4', border: '#16a34a', icon: Trophy, label: 'Sports' },
+  Admin:    { color: '#475569', bg: '#f1f5f9', border: '#475569', icon: Briefcase, label: 'Admin' },
   Building: { color: '#4f46e5', bg: '#eef2ff', border: '#4f46e5', icon: Building2,     label: 'Building'  },
   Room:     { color: '#0891b2', bg: '#ecfeff', border: '#0891b2', icon: DoorOpen,      label: 'Room'      },
-  Hostel:   { color: '#7c3aed', bg: '#f5f3ff', border: '#7c3aed', icon: BedDouble,     label: 'Hostel'    },
   Outdoor:  { color: '#16a34a', bg: '#f0fdf4', border: '#16a34a', icon: Trees,         label: 'Outdoor'   },
   Gate:     { color: '#d97706', bg: '#fffbeb', border: '#d97706', icon: MapPin,        label: 'Gate'      },
   Parking:  { color: '#64748b', bg: '#f8fafc', border: '#64748b', icon: ParkingCircle, label: 'Parking'   },
@@ -210,6 +216,24 @@ function pathsToGeoJSON(paths, highlightId) {
 
 // ─── Custom Marker ────────────────────────────────────────────────────────────
 
+const CategoryFilter = ({ value, onChange }) => (
+  <div className="flex gap-2 overflow-x-auto pb-1 mt-2 scrollbar-none">
+    {['All', 'Academic', 'Hostel', 'Canteen', 'Lab', 'Sports', 'Admin', 'Building', 'Room', 'Outdoor', 'Gate', 'Parking'].map(cat => (
+      <button
+        key={cat}
+        onClick={() => onChange(cat)}
+        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+          value === cat 
+            ? 'bg-brand-600 text-white shadow-sm' 
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }`}
+      >
+        {cat}
+      </button>
+    ))}
+  </div>
+);
+
 const PinMarker = ({ location, isFrom, isTo, onClick }) => {
   const meta = CATEGORY_META[location.category] || CATEGORY_META.Building;
   const Icon = meta.icon;
@@ -240,7 +264,7 @@ const PinMarker = ({ location, isFrom, isTo, onClick }) => {
 
 const LocationForm = ({ initial, allLocations, onSave, onCancel, isSaving }) => {
   const [form, setForm] = useState({
-    location_name: '', description: '', category: 'Building',
+    location_name: '', description: '', category: 'Academic',
     floor_number: '', image_url: '', building_id: '', ...initial,
   });
   const buildings = allLocations.filter(l => l.category === 'Building');
@@ -361,6 +385,7 @@ const CampusMap = () => {
   const [activeTab, setActiveTab]   = useState('navigate');
   const [popupInfo, setPopupInfo]   = useState(null);
   const [searchQ, setSearchQ]       = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [adminMsg, setAdminMsg]     = useState(null);
 
   // Navigation
@@ -538,13 +563,19 @@ const CampusMap = () => {
   }, [pathPoints]);
 
   const filteredLocations = useMemo(() => {
-    if (!searchQ.trim()) return locations;
-    const q = searchQ.toLowerCase();
-    return locations.filter(l =>
-      l.location_name?.toLowerCase().includes(q) ||
-      l.category?.toLowerCase().includes(q)
-    );
-  }, [locations, searchQ]);
+    let result = locations;
+    if (categoryFilter !== 'All') {
+      result = result.filter(l => l.category === categoryFilter);
+    }
+    if (searchQ.trim()) {
+      const q = searchQ.toLowerCase();
+      result = result.filter(l =>
+        l.location_name?.toLowerCase().includes(q) ||
+        l.category?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [locations, searchQ, categoryFilter]);
 
   // ── Cursor ─────────────────────────────────────────────────────────────────
 
@@ -662,11 +693,12 @@ const CampusMap = () => {
                     <Layers size={14} className="text-brand-500" />
                     <h3 className="font-bold text-gray-900 text-sm">Campus Locations</h3>
                   </div>
-                  <div className="relative">
+                  <div className="relative text-black">
                     <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                     <input className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                       placeholder="Search..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
                   </div>
+                  <CategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
                   <div className="overflow-y-auto flex-1 space-y-1">
                     {filteredLocations.map(loc => {
                       const meta = CATEGORY_META[loc.category] || CATEGORY_META.Building;
@@ -709,11 +741,12 @@ const CampusMap = () => {
                     <h3 className="font-bold text-gray-900 text-sm">All Pins ({locations.length})</h3>
                     <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-2 py-1">Click map to add</div>
                   </div>
-                  <div className="relative">
+                  <div className="relative text-black">
                     <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
                     <input className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                       placeholder="Search..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
                   </div>
+                  <CategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
                   <div className="overflow-y-auto flex-1 space-y-1">
                     {filteredLocations.map(loc => {
                       const meta = CATEGORY_META[loc.category] || CATEGORY_META.Building;

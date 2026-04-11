@@ -42,10 +42,17 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [user]);
 
-  const handleLogout = () => {
-    logout();
-    setIsProfileOpen(false);
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout', {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+    } catch (err) {
+      console.error('Backend logout error', err);
+    }
     navigate('/login');
+    setIsProfileOpen(false);
+    logout();
   };
 
   const navLinks = [

@@ -1,38 +1,32 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, BookOpen } from 'lucide-react';
+import { Mail, Lock, ArrowRight, BookOpen, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-// Mock API for login since backend might not be running immediately
-const mockLogin = async (email, password) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: {
-          token: 'mock-jwt-token',
-          user: { id: 1, name: 'Demo User', email, role: email.includes('admin') ? 'Administrator' : email.includes('club') ? 'Club Member' : 'Student' }
-        }
-      });
-    }, 1000);
-  });
-};
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
+  const navigate = useNavigate();
   
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
-      // Connect to real backend API securely through Vite Proxy
       const response = await axios.post('/api/auth/login', { email, password });
       login(response.data.data.accessToken, response.data.data.user);
-    } catch (error) {
-      console.error("Login failed", error);
-      alert("Invalid credentials. Try any email and password for demo.");
+      navigate('/');
+    } catch (err) {
+      console.error("Login failed", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Invalid credentials or server error. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -57,6 +51,13 @@ const Login = () => {
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome to CampMate</h1>
             <p className="text-gray-500 mt-2 text-sm">Your all-in-one campus information hub</p>
           </div>
+          
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex items-center gap-3 animate-fade-in shadow-sm">
+              <AlertCircle size={20} className="text-rose-500 shrink-0" />
+              <p className="font-medium leading-tight">{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -70,7 +71,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-12 pr-4 py-3 bg-white/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
-                  placeholder="student@campmate.edu"
+                  placeholder="your.email@example.com"
                   required
                 />
               </div>
@@ -98,13 +99,17 @@ const Login = () => {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors disabled:opacity-70 font-medium"
             >
-              {loading ? 'Entering...' : 'Sign In'}
+              {loading ? 'Authenticating...' : 'Sign In'}
               {!loading && <ArrowRight size={18} />}
             </button>
             
-            <p className="text-xs text-center text-gray-400 mt-4">
-              Demo Mode: Enter any email/password. Use 'admin@' for Administrator role, 'club@' for Club Member role.
-            </p>
+            <div className="text-xs text-center text-gray-500 mt-6 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+              <span className="font-semibold block mb-1">Demo Access:</span>
+              <ul className="space-y-1">
+                <li><span className="font-medium text-gray-700">Any Email</span> • Enter any email and password to log in as a student!</li>
+                <li><span className="font-medium text-gray-700">Admin Login:</span> admin@campmate.com • Password: Test@1234</li>
+              </ul>
+            </div>
           </form>
         </div>
       </div>

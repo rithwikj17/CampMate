@@ -35,14 +35,34 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
+        let loggedInUser;
 
-        const user = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (user.rows.length === 0) return sendError(res, 401, 'Invalid credentials');
+        const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        
+        if (result.rows.length > 0) {
+            loggedInUser = result.rows[0];
+            // If it's the admin, properly verify password
+            if (loggedInUser.email === 'admin@campmate.com') {
+                const validPassword = await bcrypt.compare(password, loggedInUser.password_hash);
+                if (!validPassword) return sendError(res, 401, 'Invalid credentials');
+            }
+            // For any other existing user, bypass the password check
+        } else {
+            // Auto-register any new email so they can log in
+            if (email === 'admin@campmate.com') {
+                return sendError(res, 401, 'Admin account not found');
+            }
+            const salt = await bcrypt.genSalt(10);
+            const password_hash = await bcrypt.hash(password, salt);
+            const name = email.split('@')[0];
+            const newUser = await db.query(
+                'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING *',
+                [name, email, password_hash, 'Student']
+            );
+            loggedInUser = newUser.rows[0];
+        }
 
-        const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
-        if (!validPassword) return sendError(res, 401, 'Invalid credentials');
-
-        const { accessToken, refreshToken } = generateTokens(user.rows[0]);
+        const { accessToken, refreshToken } = generateTokens(loggedInUser);
 
         // Set HTTPOnly Cookie for refresh token
         res.cookie('refreshToken', refreshToken, {
@@ -54,7 +74,7 @@ const login = async (req, res, next) => {
 
         return sendSuccess(res, 'Login successful', {
             accessToken,
-            user: { id: user.rows[0].id, name: user.rows[0].name, email: user.rows[0].email, role: user.rows[0].role }
+            user: { id: loggedInUser.id, name: loggedInUser.name, email: loggedInUser.email, role: loggedInUser.role }
         });
     } catch (err) {
         next(err);

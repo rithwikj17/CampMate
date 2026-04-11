@@ -16,7 +16,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {user && <Navbar />}
+      <Navbar />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
