@@ -100,6 +100,22 @@ function buildGraph(paths) {
     }
   });
 
+  // Bridge disconnected paths by connecting any nodes within 15 meters
+  const keys = Object.keys(nodeCoords);
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      const ka = keys[i], kb = keys[j];
+      const dist = haversine(nodeCoords[ka], nodeCoords[kb]);
+      if (dist > 0 && dist < 20) { // 20 meter snap radius
+        // check if not already explicitly connected
+        if (!graph[ka].find(e => e.to === kb)) {
+          graph[ka].push({ to: kb, dist });
+          graph[kb].push({ to: ka, dist });
+        }
+      }
+    }
+  }
+
   return { graph, nodeCoords };
 }
 
