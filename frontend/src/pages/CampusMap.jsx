@@ -406,6 +406,10 @@ const CampusMap = () => {
   const [routeError, setRouteError] = useState('');
   const [selectingFor, setSelectingFor] = useState(null);
 
+  // Live Location Tracking
+  const [userLocation, setUserLocation] = useState(null);
+  const [isUsingMyLocation, setIsUsingMyLocation] = useState(false);
+
   // Pin admin
   const [pendingPin, setPendingPin] = useState(null);
   const [editingLoc, setEditingLoc] = useState(null);
@@ -438,6 +442,39 @@ const CampusMap = () => {
   }, [authHeader]);
 
   useEffect(() => { fetchLocations(); fetchPaths(); }, [fetchLocations, fetchPaths]);
+
+  // Track GPS Location continuously
+  useEffect(() => {
+    let watchId;
+    if ('geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setUserLocation({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          });
+        },
+        (err) => console.log('Geolocation error:', err),
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+      );
+    }
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
+
+  // Update fromLoc continuously if "My Location" is active
+  useEffect(() => {
+    if (isUsingMyLocation && userLocation) {
+      setFromLoc({
+        id: 'mylocation',
+        location_name: 'My Current Location 🎯',
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        category: 'Building' // Fallback for marker styling
+      });
+    }
+  }, [isUsingMyLocation, userLocation]);
 
   const pinId = searchParams.get('pin');
   useEffect(() => {
@@ -477,6 +514,7 @@ const CampusMap = () => {
     setFromLoc(null); setToLoc(null);
     setRoute(null); setRouteError('');
     setSelectingFor(null);
+    setIsUsingMyLocation(false);
   };
 
   // ── Map click ──────────────────────────────────────────────────────────────
@@ -662,8 +700,21 @@ const CampusMap = () => {
                   <label className="text-xs font-semibold text-gray-500 mb-1 block">From</label>
                   <div className="flex gap-2">
                     <select className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
-                      value={fromLoc?.id || ''} onChange={e => setFromLoc(locations.find(l => l.id === Number(e.target.value)) || null)}>
+                      value={fromLoc?.id || ''} onChange={e => {
+                        const val = e.target.value;
+                        if (val === 'mylocation') {
+                          setIsUsingMyLocation(true);
+                          // Initialize immediately if known
+                          if (userLocation) {
+                            setFromLoc({ id: 'mylocation', location_name: 'My Current Location 🎯', latitude: userLocation.latitude, longitude: userLocation.longitude, category: 'Building' });
+                          }
+                        } else {
+                          setIsUsingMyLocation(false);
+                          setFromLoc(locations.find(l => l.id === Number(val)) || null);
+                        }
+                      }}>
                       <option value="">Select starting point</option>
+                      <option value="mylocation" className="font-bold text-blue-600">🎯 My Current Location</option>
                       {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
                     </select>
                     <button title="Pick on map" onClick={() => setSelectingFor(s => s === 'from' ? null : 'from')}
