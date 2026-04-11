@@ -153,6 +153,15 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Explicit Desktop Logout Button */}
+                <button 
+                  onClick={handleLogout}
+                  className="hidden md:flex items-center space-x-2 text-slate-500 hover:text-rose-600 px-3 py-2 rounded-lg font-medium transition-colors border border-transparent hover:border-rose-100 hover:bg-rose-50"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-sm">Log Out</span>
+                </button>
               </>
             ) : (
               <NavLink 
@@ -193,6 +202,17 @@ const Navbar = () => {
                 {link.name}
               </NavLink>
             ))}
+            {user && (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 mt-2 rounded-lg text-base font-medium text-rose-600 hover:bg-rose-50"
+              >
+                Log Out
+              </button>
+            )}
           </div>
         </div>
       )}
