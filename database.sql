@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS events (
     venue VARCHAR(200) NOT NULL,
     category VARCHAR(50),
     organizer_id INTEGER REFERENCES clubs(id) ON DELETE SET NULL,
+    location_id INTEGER REFERENCES campus_locations(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -51,6 +52,12 @@ CREATE TABLE IF NOT EXISTS campus_locations (
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     description TEXT,
+    category VARCHAR(50) DEFAULT 'Building',
+    floor_number INTEGER NULL,
+    image_url TEXT NULL,
+    building_id INTEGER REFERENCES campus_locations(id) ON DELETE SET NULL,
+    opening_hours JSONB DEFAULT '{}'::jsonb,
+    is_accessible BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

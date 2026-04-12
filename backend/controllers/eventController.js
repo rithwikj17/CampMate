@@ -6,9 +6,10 @@ const getAllEvents = async (req, res, next) => {
         const { category, upcoming, search, page = 1, limit = 10 } = req.query;
         
         let query = `
-            SELECT e.*, c.club_name as organizer_name 
+            SELECT e.*, c.club_name as organizer_name, cl.latitude as location_lat, cl.longitude as location_lng 
             FROM events e 
             LEFT JOIN clubs c ON e.organizer_id = c.id
+            LEFT JOIN campus_locations cl ON e.location_id = cl.id
             WHERE e.deleted_at IS NULL
         `;
         const queryParams = [];
@@ -31,7 +32,7 @@ const getAllEvents = async (req, res, next) => {
         }
 
         // Count total for pagination
-        const countQuery = query.replace('SELECT e.*, c.club_name as organizer_name', 'SELECT COUNT(*)');
+        const countQuery = query.replace('SELECT e.*, c.club_name as organizer_name, cl.latitude as location_lat, cl.longitude as location_lng', 'SELECT COUNT(*)');
         const totalResult = await db.query(countQuery, queryParams);
         const totalItemCount = parseInt(totalResult.rows[0].count, 10);
 
@@ -57,7 +58,7 @@ const getAllEvents = async (req, res, next) => {
 
 const createEvent = async (req, res, next) => {
     try {
-        const { title, description, date, time, venue, category, organizer_id, max_participants } = req.body;
+        const { title, description, date, time, venue, category, organizer_id, max_participants, location_id } = req.body;
 
         // Verify club membership if user is not Administrator
         if (req.user.role !== 'Administrator') {
@@ -71,8 +72,8 @@ const createEvent = async (req, res, next) => {
         }
 
         const newEvent = await db.query(
-            'INSERT INTO events (title, description, date, time, venue, category, organizer_id, max_participants) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [title, description, date, time, venue, category, organizer_id, max_participants || null]
+            'INSERT INTO events (title, description, date, time, venue, category, organizer_id, max_participants, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+            [title, description, date, time, venue, category, organizer_id, max_participants || null, location_id || null]
         );
 
         return sendCreated(res, 'Event created successfully', newEvent.rows[0]);

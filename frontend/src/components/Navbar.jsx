@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Tent, Bell, Menu, X, User, LogOut, Calendar, Settings, Home, Users, Map, LayoutDashboard } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_LINKS = [
   { name: 'Home',   path: '/',       icon: Home },
@@ -16,13 +17,7 @@ const Navbar = () => {
   const [unreadCount, setUnreadCount]           = useState(0);
   const [scrolled, setScrolled]                 = useState(false);
 
-  const navigate   = useNavigate();
-  const profileRef = useRef(null);
-  const user       = JSON.parse(localStorage.getItem('user') || 'null');
-
-  const navLinks = user?.role === 'Administrator'
-    ? [...NAV_LINKS, { name: 'Admin', path: '/admin', icon: LayoutDashboard }]
-    : NAV_LINKS;
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -47,10 +42,17 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout', {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+    } catch (err) {
+      console.error('Backend logout error', err);
+    }
     navigate('/login');
+    setIsProfileOpen(false);
+    logout();
   };
 
   return (
@@ -139,6 +141,15 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Explicit Desktop Logout Button */}
+                <button 
+                  onClick={handleLogout}
+                  className="hidden md:flex items-center space-x-2 text-slate-500 hover:text-rose-600 px-3 py-2 rounded-lg font-medium transition-colors border border-transparent hover:border-rose-100 hover:bg-rose-50"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-sm">Log Out</span>
+                </button>
               </>
             ) : (
               <NavLink to="/login" className="btn-primary text-sm">Log In</NavLink>
@@ -174,6 +185,17 @@ const Navbar = () => {
                 {name}
               </NavLink>
             ))}
+            {user && (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 mt-2 rounded-lg text-base font-medium text-rose-600 hover:bg-rose-50"
+              >
+                Log Out
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -22,19 +22,10 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8f7ff] flex flex-col font-sans">
-      {/* Ambient background blobs */}
-      {user && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <div className="blob absolute -top-32 -left-32 w-96 h-96 bg-brand-200/40" />
-          <div className="blob absolute top-1/2 -right-48 w-[500px] h-[500px] bg-violet-200/30" style={{ animationDelay: '3s' }} />
-          <div className="blob absolute -bottom-32 left-1/4 w-80 h-80 bg-indigo-200/30" style={{ animationDelay: '6s' }} />
-        </div>
-      )}
-
-      {user && <Navbar />}
-
-      <main className="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      <Navbar />
+      
+      <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
           <Route path="/"      element={user ? <Dashboard /> : <Navigate to="/login" />} />
