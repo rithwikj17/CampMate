@@ -122,7 +122,7 @@ const Clubs = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   
   const [selectedClub, setSelectedClub] = useState(null);
-  const [clubEvents, setClubEvents] = useState([]);
+  const [clubEvents, setClubEvents]     = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   
   const [toast, setToast] = useState(null);
@@ -163,8 +163,7 @@ const Clubs = () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/clubs/${club.id}/events`);
       setClubEvents(res.data.data || []);
-    } catch (err) {
-      console.error('Failed to fetch club events:', err);
+    } catch {
       setClubEvents([]);
     } finally {
       setEventsLoading(false);
@@ -402,7 +401,7 @@ const Clubs = () => {
           club={clubs.find(c => c.id === selectedClub.id) || selectedClub}
           events={clubEvents}
           loading={eventsLoading}
-          onClose={handleCloseModal}
+          onClose={() => { setSelectedClub(null); setClubEvents([]); }}
         />
       )}
     </div>
