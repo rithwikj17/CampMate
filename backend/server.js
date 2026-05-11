@@ -64,6 +64,17 @@ app.get('/api/setup-database-now', (req, res) => {
   });
 });
 
+// Temporary route to import OSM map data
+app.get('/api/import-map-now', (req, res) => {
+  const { exec } = require('child_process');
+  exec('npm run import-map', (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).send(`Error: ${error.message}\nStderr: ${stderr}`);
+      }
+      res.send(`<h1>Map Data Imported!</h1><pre>${stdout}</pre>`);
+  });
+});
+
 // Global Error Handler
 app.use(errorHandler);
 
