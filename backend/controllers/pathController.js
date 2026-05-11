@@ -40,4 +40,21 @@ const deletePath = async (req, res, next) => {
     }
 };
 
-module.exports = { getAllPaths, createPath, deletePath };
+// PUT /api/paths/:id — admin edits a path
+const updatePath = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        if (!name) return sendError(res, 400, 'name is required to update.');
+        const result = await db.query(
+            'UPDATE campus_paths SET name = $1 WHERE id = $2 RETURNING *',
+            [name, id]
+        );
+        if (result.rows.length === 0) return sendError(res, 404, 'Path not found.');
+        return sendSuccess(res, 'Path updated successfully', result.rows[0]);
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { getAllPaths, createPath, deletePath, updatePath };

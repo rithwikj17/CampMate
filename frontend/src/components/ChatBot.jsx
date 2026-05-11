@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Bot, User, CornerDownRight } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,7 +46,7 @@ const ChatBot = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/ai/chat',
+        `${API_BASE}/api/ai/chat`,
         { message: userMessage.text, sessionId },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

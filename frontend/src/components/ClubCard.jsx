@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Users, UserPlus, UserMinus, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 
 // Inline Toast component
 const Toast = ({ message, type }) => (
@@ -26,13 +27,13 @@ const ClubCard = ({ club, isMember: initialIsMember, onStatusChange }) => {
     setLoading(true);
     try {
       if (localIsMember) {
-        await axios.delete(`http://localhost:5000/api/clubs/${club.id}/leave`, {
+        await axios.delete(`${API_BASE}/api/clubs/${club.id}/leave`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setLocalIsMember(false);
         showToast(`Left "${club.club_name}".`, 'success');
       } else {
-        await axios.post(`http://localhost:5000/api/clubs/${club.id}/join`, {}, {
+        await axios.post(`${API_BASE}/api/clubs/${club.id}/join`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setLocalIsMember(true);
@@ -70,7 +71,7 @@ const ClubCard = ({ club, isMember: initialIsMember, onStatusChange }) => {
     <>
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col h-full group">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex flex-col h-full group cursor-pointer">
         {/* Banner */}
         <div
           className={`h-32 w-full bg-gradient-to-r ${gradient} relative flex items-center justify-center text-white/20`}

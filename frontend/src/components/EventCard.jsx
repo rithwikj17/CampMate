@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, MapPin, Clock, Users, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 
 // Inline Toast component
 const Toast = ({ message, type }) => (
@@ -27,13 +28,13 @@ const EventCard = ({ event, isRegistered: initialIsRegistered, onStatusChange })
     setLoading(true);
     try {
       if (localRegistered) {
-        await axios.delete(`http://localhost:5000/api/events/${event.id}/unregister`, {
+        await axios.delete(`${API_BASE}/api/events/${event.id}/unregister`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setLocalRegistered(false);
         showToast('Successfully unregistered from event.', 'success');
       } else {
-        await axios.post(`http://localhost:5000/api/events/${event.id}/register`, {}, {
+        await axios.post(`${API_BASE}/api/events/${event.id}/register`, {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setLocalRegistered(true);
@@ -76,7 +77,7 @@ const EventCard = ({ event, isRegistered: initialIsRegistered, onStatusChange })
     <>
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex flex-col h-full cursor-pointer">
         <div className="p-5 flex-grow">
           <div className="flex justify-between items-start mb-3">
             <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${getCategoryColor(event.category)}`}>
