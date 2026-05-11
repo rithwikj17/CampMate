@@ -72,11 +72,14 @@ async function runImport() {
 
         console.log(`🏢 Processing ${buildings.length} buildings...`);
         let buildingsInserted = 0;
+        let buildingBoundsInserted = 0;
         for (const b of buildings) {
-            // Find center of building
+            const coordinates = [];
             let latSum = 0, lngSum = 0, count = 0;
+            
             for (const nId of b.nodes) {
                 if (nodes[nId]) {
+                    coordinates.push({ lat: nodes[nId].lat, lng: nodes[nId].lng });
                     latSum += nodes[nId].lat;
                     lngSum += nodes[nId].lng;
                     count++;
@@ -87,15 +90,25 @@ async function runImport() {
                 const lng = lngSum / count;
                 const name = b.tags.name || 'Building'; // Use generic name if not tagged
                 
+                // 1. Insert center point for markers/routing
                 await db.query(
                     `INSERT INTO campus_locations (location_name, latitude, longitude, description, category, is_accessible) 
                      VALUES ($1, $2, $3, $4, $5, true)`,
                     [name, lat, lng, b.tags.amenity || 'Campus Building', 'Building']
                 );
                 buildingsInserted++;
+
+                // 2. Insert polygon boundary for the map shape
+                if (coordinates.length >= 3) {
+                    await db.query(
+                        'INSERT INTO campus_boundaries (name, coordinates, color) VALUES ($1, $2, $3)',
+                        [name, JSON.stringify(coordinates), '#4b5563'] // Slate color for buildings
+                    );
+                    buildingBoundsInserted++;
+                }
             }
         }
-        console.log(`✅ Inserted ${buildingsInserted} buildings into campus_locations.`);
+        console.log(`✅ Inserted ${buildingsInserted} building points and ${buildingBoundsInserted} building shapes.`);
 
         console.log(`🛣️ Processing ${paths.length} paths...`);
         let pathsInserted = 0;
