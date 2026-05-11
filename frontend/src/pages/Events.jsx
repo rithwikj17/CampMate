@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Calendar as CalendarIcon, MapPin, Clock, Search, Filter, Plus, X, CheckCircle, Navigation } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 import EventRegistrationModal from '../components/EventRegistrationModal';
 
 const INITIAL_EVENTS = [
@@ -201,7 +202,7 @@ const Events = () => {
 
   useEffect(() => {
     // Basic fetch locations for the dropdown
-    axios.get('/api/locations')
+    axios.get(`${API_BASE}/api/locations`)
       .then(res => setLocations(res.data.data || []))
       .catch(console.error);
     // Note: Events are still using static INITIAL_EVENTS mock.

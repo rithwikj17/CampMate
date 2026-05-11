@@ -12,6 +12,7 @@ import {
   BookOpen, Coffee, FlaskConical, Trophy, Briefcase, Square
 } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 
@@ -458,21 +459,21 @@ const CampusMap = () => {
 
   const fetchLocations = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/locations', { headers: authHeader });
+      const { data } = await axios.get(`${API_BASE}/api/locations`, { headers: authHeader });
       setLocations(data.data || []);
     } catch { setLocations([]); }
   }, [authHeader]);
 
   const fetchPaths = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/paths', { headers: authHeader });
+      const { data } = await axios.get(`${API_BASE}/api/paths`, { headers: authHeader });
       setPaths(data.data || []);
     } catch { setPaths([]); }
   }, [authHeader]);
 
   const fetchBoundaries = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/boundaries', { headers: authHeader });
+      const { data } = await axios.get(`${API_BASE}/api/boundaries`, { headers: authHeader });
       setBoundaries(data.data || []);
     } catch { setBoundaries([]); }
   }, [authHeader]);
@@ -589,10 +590,10 @@ const CampusMap = () => {
         opening_hours: form.opening_hours_text ? { text: form.opening_hours_text } : null,
       };
       if (editingLoc?.id) {
-        await axios.put(`/api/locations/${editingLoc.id}`, payload, { headers: authHeader });
+        await axios.put(`${API_BASE}/api/locations/${editingLoc.id}`, payload, { headers: authHeader });
         flash('success', 'Location updated!');
       } else {
-        await axios.post('/api/locations', payload, { headers: authHeader });
+        await axios.post(`${API_BASE}/api/locations`, payload, { headers: authHeader });
         flash('success', 'Location saved!');
       }
       await fetchLocations();
@@ -604,7 +605,7 @@ const CampusMap = () => {
   const handleDeletePin = async (loc) => {
     if (!window.confirm(`Delete "${loc.location_name}"?`)) return;
     try {
-      await axios.delete(`/api/locations/${loc.id}`, { headers: authHeader });
+      await axios.delete(`${API_BASE}/api/locations/${loc.id}`, { headers: authHeader });
       flash('success', 'Location deleted.');
       await fetchLocations();
       setPopupInfo(null);
@@ -618,7 +619,7 @@ const CampusMap = () => {
     if (!pathName.trim()) { flash('error', 'Enter a path name.'); return; }
     setIsSavingPath(true);
     try {
-      await axios.post('/api/paths', { name: pathName, coordinates: pathPoints }, { headers: authHeader });
+      await axios.post(`${API_BASE}/api/paths`, { name: pathName, coordinates: pathPoints }, { headers: authHeader });
       flash('success', `Path "${pathName}" saved!`);
       await fetchPaths();
       setDrawingPath(false); setPathPoints([]); setPathName('');
@@ -629,14 +630,14 @@ const CampusMap = () => {
   const handleDeletePath = async (id, name) => {
     if (!window.confirm(`Delete path "${name}"?`)) return;
     try {
-      await axios.delete(`/api/paths/${id}`, { headers: authHeader });
+      await axios.delete(`${API_BASE}/api/paths/${id}`, { headers: authHeader });
       flash('success', 'Path deleted.');
       await fetchPaths();
     } catch { flash('error', 'Failed to delete path.'); }
   };
   const handleUpdatePath = async (id, name) => {
     try {
-      await axios.put(`/api/paths/${id}`, { name }, { headers: authHeader });
+      await axios.put(`${API_BASE}/api/paths/${id}`, { name }, { headers: authHeader });
       flash('success', 'Path renamed.');
       setEditingPathId(null);
       await fetchPaths();
@@ -647,7 +648,7 @@ const CampusMap = () => {
     if (!boundaryName.trim()) { flash('error', 'Enter a boundary name.'); return; }
     setIsSavingBoundary(true);
     try {
-      await axios.post('/api/boundaries', { name: boundaryName, coordinates: boundaryPoints }, { headers: authHeader });
+      await axios.post(`${API_BASE}/api/boundaries`, { name: boundaryName, coordinates: boundaryPoints }, { headers: authHeader });
       flash('success', `Boundary "${boundaryName}" saved!`);
       await fetchBoundaries();
       setDrawingBoundary(false); setBoundaryPoints([]); setBoundaryName('');
@@ -658,7 +659,7 @@ const CampusMap = () => {
   const handleDeleteBoundary = async (id) => {
     if (!window.confirm(`Delete this boundary?`)) return;
     try {
-      await axios.delete(`/api/boundaries/${id}`, { headers: authHeader });
+      await axios.delete(`${API_BASE}/api/boundaries/${id}`, { headers: authHeader });
       flash('success', 'Boundary deleted.');
       await fetchBoundaries();
     } catch { flash('error', 'Failed to delete boundary.'); }
@@ -936,7 +937,7 @@ const CampusMap = () => {
                           if (!window.confirm('Are you sure you want to delete ALL pins? This cannot be undone.')) return;
                           try {
                             for (const loc of locations) {
-                              await axios.delete(`/api/locations/${loc.id}`, { headers: authHeader });
+                              await axios.delete(`${API_BASE}/api/locations/${loc.id}`, { headers: authHeader });
                             }
                             setPopupInfo(null);
                             await fetchLocations();
@@ -1007,7 +1008,7 @@ const CampusMap = () => {
                       if (!window.confirm('Are you sure you want to delete ALL paths? This cannot be undone.')) return;
                       try {
                         for (const p of paths) {
-                          await axios.delete(`/api/paths/${p.id}`, { headers: authHeader });
+                          await axios.delete(`${API_BASE}/api/paths/${p.id}`, { headers: authHeader });
                         }
                         setPaths([]);
                         setShowPaths(false);

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, BookOpen, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE from '../api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await axios.post(`${API_BASE}/api/auth/login`, { email, password });
       login(response.data.data.accessToken, response.data.data.user);
       navigate('/');
     } catch (err) {

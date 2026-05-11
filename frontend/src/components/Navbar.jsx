@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Tent, Bell, Menu, X, User, LogOut, Calendar, Settings, Home, Users, Map, LayoutDashboard, Sun, Moon } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import NotificationsPanel from './NotificationsPanel';
@@ -43,7 +44,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('/api/auth/logout', {}, {
+      await axios.post(`${API_BASE}/api/auth/logout`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
     } catch (err) {
