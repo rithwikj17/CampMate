@@ -19,8 +19,8 @@ const createPath = async (req, res, next) => {
             return sendError(res, 400, 'name and at least 2 coordinates are required.');
         }
         const result = await db.query(
-            'INSERT INTO campus_paths (name, coordinates, created_by) VALUES ($1, $2, $3) RETURNING *',
-            [name, JSON.stringify(coordinates), req.user?.id || null]
+            'INSERT INTO campus_paths (name, coordinates) VALUES ($1, $2) RETURNING *',
+            [name, JSON.stringify(coordinates)]
         );
         return sendSuccess(res, 'Path created successfully', result.rows[0], 201);
     } catch (err) {
