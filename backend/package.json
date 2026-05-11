@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "seed": "node seed.js",
     "setup-db": "node init-db.js && node seed.js && node insert-paths.js && node insert-pins.js",
-    "import-map": "node import-osm.js"
+    "import-map": "node import-osm.js",
+    "init-db": "node init-db.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

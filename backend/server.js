@@ -75,6 +75,17 @@ app.get('/api/import-map-now', (req, res) => {
   });
 });
 
+// Temporary route to initialize DB schema safely
+app.get('/api/init-db-now', (req, res) => {
+  const { exec } = require('child_process');
+  exec('npm run init-db', (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).send(`Error: ${error.message}\nStderr: ${stderr}`);
+      }
+      res.send(`<h1>Schema Initialized Safely!</h1><pre>${stdout}</pre>`);
+  });
+});
+
 // Global Error Handler
 app.use(errorHandler);
 
