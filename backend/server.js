@@ -53,6 +53,17 @@ app.get('/', (req, res) => {
   res.send('CampMate API is running');
 });
 
+// Temporary route to initialize DB from browser
+app.get('/api/setup-database-now', (req, res) => {
+  const { exec } = require('child_process');
+  exec('npm run setup-db', (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).send(`Error: ${error.message}\nStderr: ${stderr}`);
+      }
+      res.send(`<h1>Database Initialized!</h1><pre>${stdout}</pre>`);
+  });
+});
+
 // Global Error Handler
 app.use(errorHandler);
 
