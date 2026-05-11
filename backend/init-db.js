@@ -130,8 +130,8 @@ async function initDB() {
     `);
 
     // Add columns to campus_locations safely in case they exist from an older schema format
-    try { await db.query('ALTER TABLE campus_locations ADD COLUMN category VARCHAR(50) DEFAULT ''Academic'''); } catch(e){}
-    try { await db.query('ALTER TABLE campus_locations ADD COLUMN is_accessible BOOLEAN DEFAULT true'); } catch(e){}
+    try { await db.query("ALTER TABLE campus_locations ADD COLUMN category VARCHAR(50) DEFAULT 'Academic'"); } catch(e){}
+    try { await db.query("ALTER TABLE campus_locations ADD COLUMN is_accessible BOOLEAN DEFAULT true"); } catch(e){}
     
     console.log('✅ All tables verified or created successfully!');
   } catch (err) {
