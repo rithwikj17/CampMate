@@ -12,6 +12,7 @@ import {
   BookOpen, Coffee, FlaskConical, Trophy, Briefcase, Square
 } from 'lucide-react';
 import axios from 'axios';
+import API_BASE from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 
@@ -245,7 +246,7 @@ const CategoryFilter = ({ value, onChange }) => (
         className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
           value === cat 
             ? 'bg-brand-600 text-white shadow-sm' 
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-surface-800 dark:text-gray-400 dark:hover:bg-surface-700'
         }`}
       >
         {cat}
@@ -441,6 +442,9 @@ const CampusMap = () => {
   const [pathName, setPathName]         = useState('');
   const [isSavingPath, setIsSavingPath] = useState(false);
   const [showPaths, setShowPaths]       = useState(true);
+  const [selectedPathId, setSelectedPathId] = useState(null);
+  const [editingPathId, setEditingPathId] = useState(null);
+  const [editingPathName, setEditingPathName] = useState('');
 
   // Boundary drawing
   const [boundaries, setBoundaries] = useState([]);
@@ -455,21 +459,21 @@ const CampusMap = () => {
 
   const fetchLocations = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/locations', { headers: authHeader });
+      const { data } = await axios.get(`${API_BASE}/api/locations`, { headers: authHeader });
       setLocations(data.data || []);
     } catch { setLocations([]); }
   }, [authHeader]);
 
   const fetchPaths = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/paths', { headers: authHeader });
+      const { data } = await axios.get(`${API_BASE}/api/paths`, { headers: authHeader });
       setPaths(data.data || []);
     } catch { setPaths([]); }
   }, [authHeader]);
 
   const fetchBoundaries = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/boundaries', { headers: authHeader });
+      const { data } = await axios.get(`${API_BASE}/api/boundaries`, { headers: authHeader });
       setBoundaries(data.data || []);
     } catch { setBoundaries([]); }
   }, [authHeader]);
@@ -586,10 +590,10 @@ const CampusMap = () => {
         opening_hours: form.opening_hours_text ? { text: form.opening_hours_text } : null,
       };
       if (editingLoc?.id) {
-        await axios.put(`/api/locations/${editingLoc.id}`, payload, { headers: authHeader });
+        await axios.put(`${API_BASE}/api/locations/${editingLoc.id}`, payload, { headers: authHeader });
         flash('success', 'Location updated!');
       } else {
-        await axios.post('/api/locations', payload, { headers: authHeader });
+        await axios.post(`${API_BASE}/api/locations`, payload, { headers: authHeader });
         flash('success', 'Location saved!');
       }
       await fetchLocations();
@@ -601,7 +605,7 @@ const CampusMap = () => {
   const handleDeletePin = async (loc) => {
     if (!window.confirm(`Delete "${loc.location_name}"?`)) return;
     try {
-      await axios.delete(`/api/locations/${loc.id}`, { headers: authHeader });
+      await axios.delete(`${API_BASE}/api/locations/${loc.id}`, { headers: authHeader });
       flash('success', 'Location deleted.');
       await fetchLocations();
       setPopupInfo(null);
@@ -615,7 +619,7 @@ const CampusMap = () => {
     if (!pathName.trim()) { flash('error', 'Enter a path name.'); return; }
     setIsSavingPath(true);
     try {
-      await axios.post('/api/paths', { name: pathName, coordinates: pathPoints }, { headers: authHeader });
+      await axios.post(`${API_BASE}/api/paths`, { name: pathName, coordinates: pathPoints }, { headers: authHeader });
       flash('success', `Path "${pathName}" saved!`);
       await fetchPaths();
       setDrawingPath(false); setPathPoints([]); setPathName('');
@@ -626,17 +630,25 @@ const CampusMap = () => {
   const handleDeletePath = async (id, name) => {
     if (!window.confirm(`Delete path "${name}"?`)) return;
     try {
-      await axios.delete(`/api/paths/${id}`, { headers: authHeader });
+      await axios.delete(`${API_BASE}/api/paths/${id}`, { headers: authHeader });
       flash('success', 'Path deleted.');
       await fetchPaths();
     } catch { flash('error', 'Failed to delete path.'); }
+  };
+  const handleUpdatePath = async (id, name) => {
+    try {
+      await axios.put(`${API_BASE}/api/paths/${id}`, { name }, { headers: authHeader });
+      flash('success', 'Path renamed.');
+      setEditingPathId(null);
+      await fetchPaths();
+    } catch { flash('error', 'Failed to rename path.'); }
   };
   const handleSaveBoundary = async () => {
     if (boundaryPoints.length < 3) { flash('error', 'Add at least 3 points.'); return; }
     if (!boundaryName.trim()) { flash('error', 'Enter a boundary name.'); return; }
     setIsSavingBoundary(true);
     try {
-      await axios.post('/api/boundaries', { name: boundaryName, coordinates: boundaryPoints }, { headers: authHeader });
+      await axios.post(`${API_BASE}/api/boundaries`, { name: boundaryName, coordinates: boundaryPoints }, { headers: authHeader });
       flash('success', `Boundary "${boundaryName}" saved!`);
       await fetchBoundaries();
       setDrawingBoundary(false); setBoundaryPoints([]); setBoundaryName('');
@@ -647,7 +659,7 @@ const CampusMap = () => {
   const handleDeleteBoundary = async (id) => {
     if (!window.confirm(`Delete this boundary?`)) return;
     try {
-      await axios.delete(`/api/boundaries/${id}`, { headers: authHeader });
+      await axios.delete(`${API_BASE}/api/boundaries/${id}`, { headers: authHeader });
       flash('success', 'Boundary deleted.');
       await fetchBoundaries();
     } catch { flash('error', 'Failed to delete boundary.'); }
@@ -673,7 +685,7 @@ const CampusMap = () => {
 
   // ── GeoJSON for all saved paths ────────────────────────────────────────────
 
-  const pathsGeoJSON = useMemo(() => pathsToGeoJSON(paths), [paths]);
+  const pathsGeoJSON = useMemo(() => pathsToGeoJSON(paths, selectedPathId), [paths, selectedPathId]);
 
   // Drawing path preview GeoJSON
 
@@ -749,26 +761,26 @@ const CampusMap = () => {
       {/* Header */}
       <div className="mb-4 flex items-start justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Campus Navigator</h1>
-          <p className="text-gray-500 mt-1">Interactive map with walking directions across campus.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Campus Navigator</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Interactive map with walking directions across campus.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => setActiveTab('navigate')}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'navigate' ? 'bg-brand-600 text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'navigate' ? 'bg-brand-600 text-white shadow' : 'bg-white dark:bg-surface-dark border border-gray-200 dark:border-surface-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800'}`}>
             <Navigation size={14} className="inline mr-1" /> Navigate
           </button>
           {isAdmin && (
             <>
               <button onClick={() => setActiveTab('pins')}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'pins' ? 'bg-brand-600 text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'pins' ? 'bg-brand-600 text-white shadow' : 'bg-white dark:bg-surface-dark border border-gray-200 dark:border-surface-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800'}`}>
                 <MapPin size={14} className="inline mr-1" /> Manage Pins
               </button>
               <button onClick={() => setActiveTab('paths')}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'paths' ? 'bg-green-600 text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'paths' ? 'bg-green-600 text-white shadow' : 'bg-white dark:bg-surface-dark border border-gray-200 dark:border-surface-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800'}`}>
                 <Route size={14} className="inline mr-1" /> Draw Paths
               </button>
               <button onClick={() => setActiveTab('boundary')}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'boundary' ? 'bg-blue-600 text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'boundary' ? 'bg-blue-600 text-white shadow' : 'bg-white dark:bg-surface-dark border border-gray-200 dark:border-surface-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800'}`}>
                 <Square size={14} className="inline mr-1" /> Draw Boundaries
               </button>
             </>
@@ -791,15 +803,15 @@ const CampusMap = () => {
           {/* ── NAVIGATE ── */}
           {activeTab === 'navigate' && (
             <>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
-                <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+              <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 shadow-sm p-4 flex flex-col gap-3">
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                   <Navigation size={15} className="text-brand-500" /> Get Directions
                 </h3>
                 {/* From */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">From</label>
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">From</label>
                   <div className="flex gap-2">
-                    <select className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+                    <select className="flex-1 border border-gray-200 dark:border-surface-800 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-surface-dark dark:text-white"
                       value={fromLoc?.id || ''} onChange={e => {
                         const val = e.target.value;
                         if (val === 'mylocation') {
@@ -818,7 +830,7 @@ const CampusMap = () => {
                       {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
                     </select>
                     <button title="Pick on map" onClick={() => setSelectingFor(s => s === 'from' ? null : 'from')}
-                      className={`px-2 rounded-lg border transition-colors ${selectingFor === 'from' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                      className={`px-2 rounded-lg border transition-colors ${selectingFor === 'from' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 dark:border-surface-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800'}`}>
                       <MapPin size={14} />
                     </button>
                   </div>
@@ -826,15 +838,15 @@ const CampusMap = () => {
                 </div>
                 {/* To */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">To</label>
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">To</label>
                   <div className="flex gap-2">
-                    <select className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white"
+                    <select className="flex-1 border border-gray-200 dark:border-surface-800 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-surface-dark dark:text-white"
                       value={toLoc?.id || ''} onChange={e => setToLoc(locations.find(l => l.id === Number(e.target.value)) || null)}>
                       <option value="">Select destination</option>
                       {locations.map(l => <option key={l.id} value={l.id}>{l.location_name}</option>)}
                     </select>
                     <button title="Pick on map" onClick={() => setSelectingFor(s => s === 'to' ? null : 'to')}
-                      className={`px-2 rounded-lg border transition-colors ${selectingFor === 'to' ? 'bg-red-500 border-red-500 text-white' : 'border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                      className={`px-2 rounded-lg border transition-colors ${selectingFor === 'to' ? 'bg-red-500 border-red-500 text-white' : 'border-gray-200 dark:border-surface-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800'}`}>
                       <MapPin size={14} />
                     </button>
                   </div>
@@ -855,7 +867,7 @@ const CampusMap = () => {
               </div>
 
               {route && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex-1 overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 shadow-sm p-4 flex-1 overflow-hidden flex flex-col">
                   <DirectionsPanel
                     steps={route.steps}
                     summary={{ distance: route.distance, duration: route.duration }}
@@ -867,10 +879,10 @@ const CampusMap = () => {
               )}
 
               {!route && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex-1 overflow-hidden flex flex-col gap-2">
+                <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 shadow-sm p-4 flex-1 overflow-hidden flex flex-col gap-2">
                   <div className="flex items-center gap-2 mb-1">
                     <Layers size={14} className="text-brand-500" />
-                    <h3 className="font-bold text-gray-900 text-sm">Campus Locations</h3>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">Campus Locations</h3>
                   </div>
                   <div className="relative text-black">
                     <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
@@ -883,13 +895,13 @@ const CampusMap = () => {
                       const meta = CATEGORY_META[loc.category] || CATEGORY_META.Building;
                       const Icon = meta.icon;
                       return (
-                        <div key={loc.id} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 cursor-pointer"
+                        <div key={loc.id} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-surface-800 cursor-pointer"
                           onClick={() => { setViewState(v => ({ ...v, longitude: Number(loc.longitude), latitude: Number(loc.latitude), zoom: 18 })); setPopupInfo(loc); }}>
                           <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: meta.bg }}>
                             <Icon size={13} style={{ color: meta.color }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-800 truncate">{loc.location_name}</div>
+                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{loc.location_name}</div>
                             <div className="text-xs text-gray-400">{loc.category}</div>
                           </div>
                           <ChevronRight size={13} className="text-gray-300" />
@@ -904,25 +916,46 @@ const CampusMap = () => {
 
           {/* ── PINS (admin) ── */}
           {activeTab === 'pins' && isAdmin && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3 overflow-y-auto flex-1">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 shadow-sm p-4 flex flex-col gap-3 overflow-y-auto flex-1">
               {showPinForm ? (
                 <>
-                  <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                  <h3 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                     <Plus size={15} className="text-brand-500" />{editingLoc?.id ? 'Edit Location' : 'New Location'}
                   </h3>
-                  <LocationForm initial={editingLoc || {}} allLocations={locations}
+                  <LocationForm initial={editingLoc || (pendingPin ? { latitude: pendingPin.lat, longitude: pendingPin.lng } : {})} allLocations={locations}
                     onSave={handleSavePin} onCancel={() => { setShowPinForm(false); setPendingPin(null); setEditingLoc(null); }}
                     isSaving={isSaving} />
                 </>
               ) : (
                 <>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900 text-sm">All Pins ({locations.length})</h3>
-                    <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-2 py-1">Click map to add</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-sm">All Pins ({locations.length})</h3>
+                    <div className="flex gap-2">
+                      <div className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-surface-800 rounded-lg px-2 py-1 flex items-center">Click map to add</div>
+                      {locations.length > 0 && (
+                        <button onClick={async () => {
+                          if (!window.confirm('Are you sure you want to delete ALL pins? This cannot be undone.')) return;
+                          try {
+                            for (const loc of locations) {
+                              await axios.delete(`${API_BASE}/api/locations/${loc.id}`, { headers: authHeader });
+                            }
+                            setPopupInfo(null);
+                            await fetchLocations();
+                            setAdminMsg({ type: 'success', text: 'All pins deleted successfully.' });
+                            setTimeout(() => setAdminMsg(null), 3000);
+                          } catch {
+                            setAdminMsg({ type: 'error', text: 'Failed to delete some pins.' });
+                          }
+                        }}
+                        className="text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 flex items-center gap-1 transition-colors">
+                          <Trash2 size={12} /> Delete All
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="relative text-black">
+                  <div className="relative text-black dark:text-white">
                     <Search size={13} className="absolute left-2.5 top-2.5 text-gray-400" />
-                    <input className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
+                    <input className="w-full pl-8 pr-3 py-2 border border-gray-200 dark:border-surface-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white dark:bg-surface-900/50 dark:text-white"
                       placeholder="Search..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
                   </div>
                   <CategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
@@ -931,13 +964,13 @@ const CampusMap = () => {
                       const meta = CATEGORY_META[loc.category] || CATEGORY_META.Building;
                       const Icon = meta.icon;
                       return (
-                        <div key={loc.id} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 cursor-pointer group"
+                        <div key={loc.id} className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-surface-800 cursor-pointer group"
                           onClick={() => { setViewState(v => ({ ...v, longitude: Number(loc.longitude), latitude: Number(loc.latitude), zoom: 18 })); setPopupInfo(loc); }}>
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: meta.bg }}>
                             <Icon size={14} style={{ color: meta.color }} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-800 truncate">{loc.location_name}</div>
+                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{loc.location_name}</div>
                             <div className="text-xs text-gray-400">{loc.category}{loc.floor_number ? ` · Floor ${loc.floor_number}` : ''}</div>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -955,8 +988,8 @@ const CampusMap = () => {
 
           {/* ── PATHS (admin) ── */}
           {activeTab === 'paths' && isAdmin && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3 overflow-y-auto flex-1">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 shadow-sm p-4 flex flex-col gap-3 overflow-y-auto flex-1">
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                 <Route size={15} className="text-green-500" /> Walkable Paths
               </h3>
 
@@ -970,19 +1003,85 @@ const CampusMap = () => {
                     className="w-full border border-gray-200 text-gray-600 text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50">
                     <Eye size={14} /> {showPaths ? 'Hide' : 'Show'} Paths on Map
                   </button>
+                  {paths.length > 0 && (
+                    <button onClick={async () => {
+                      if (!window.confirm('Are you sure you want to delete ALL paths? This cannot be undone.')) return;
+                      try {
+                        for (const p of paths) {
+                          await axios.delete(`${API_BASE}/api/paths/${p.id}`, { headers: authHeader });
+                        }
+                        setPaths([]);
+                        setShowPaths(false);
+                        setSelectedPathId(null);
+                        setAdminMsg({ type: 'success', text: 'All paths deleted successfully.' });
+                        setTimeout(() => setAdminMsg(null), 3000);
+                      } catch {
+                        setAdminMsg({ type: 'error', text: 'Failed to delete some paths.' });
+                      }
+                    }}
+                      className="w-full border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                      <Trash2 size={14} /> Delete All Paths
+                    </button>
+                  )}
                   <div className="overflow-y-auto flex-1 space-y-2 mt-1">
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Saved Paths ({paths.length})</div>
                     {paths.length === 0 && <div className="text-sm text-gray-400 text-center py-4">No paths yet. Draw the campus roads!</div>}
                     {paths.map(p => (
-                      <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl bg-green-50 border border-green-100">
-                        <Route size={13} className="text-green-600 flex-shrink-0" />
+                      <div key={p.id} 
+                        onClick={() => {
+                          const coords = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
+                          if (coords && coords.length > 0) {
+                            setViewState(prev => ({ ...prev, longitude: Number(coords[0].lng), latitude: Number(coords[0].lat), zoom: 18 }));
+                            setShowPaths(true);
+                            setSelectedPathId(p.id);
+                          }
+                        }}
+                        className={`flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-colors ${
+                          p.id === selectedPathId 
+                            ? 'bg-green-100 dark:bg-green-500/30 border border-green-400 dark:border-green-400 shadow-sm ring-1 ring-green-500' 
+                            : 'bg-green-50 dark:bg-green-500/10 border border-green-100 dark:border-green-500/30 hover:bg-green-100 dark:hover:bg-green-500/20'
+                        }`}>
+                        <Route size={13} className="text-green-600 dark:text-green-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-800 truncate">{p.name}</div>
+                          {editingPathId === p.id ? (
+                            <input
+                              autoFocus
+                              value={editingPathName}
+                              onChange={e => setEditingPathName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleUpdatePath(p.id, editingPathName);
+                                else if (e.key === 'Escape') setEditingPathId(null);
+                              }}
+                              onClick={e => e.stopPropagation()}
+                              className="w-full text-sm font-medium bg-white dark:bg-surface-800 border border-brand-500 rounded px-1.5 py-0.5 outline-none text-gray-900 dark:text-white"
+                            />
+                          ) : (
+                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{p.name}</div>
+                          )}
                           <div className="text-xs text-gray-400">
                             {(typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates).length} waypoints
                           </div>
                         </div>
-                        <button onClick={() => handleDeletePath(p.id, p.name)} className="p-1 rounded hover:bg-red-50 text-red-400"><Trash2 size={12} /></button>
+                        <div className="flex gap-1 z-10">
+                          {editingPathId === p.id ? (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleUpdatePath(p.id, editingPathName); }} 
+                              className="p-1 rounded hover:bg-brand-100 dark:hover:bg-brand-500/30 text-brand-500 transition-colors">
+                              <span className="text-[10px] uppercase font-bold tracking-wider">Save</span>
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setEditingPathId(p.id); setEditingPathName(p.name); }} 
+                              className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-500/30 text-blue-400 dark:text-blue-400 transition-colors">
+                              <Edit3 size={12} />
+                            </button>
+                          )}
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeletePath(p.id, p.name); }} 
+                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-500/30 text-red-400 dark:text-red-400 transition-colors">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1000,8 +1099,8 @@ const CampusMap = () => {
                     </button>
                   )}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1">Path Name *</label>
-                    <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Path Name *</label>
+                    <input className="w-full border border-gray-200 dark:border-surface-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white dark:bg-surface-dark dark:text-white"
                       value={pathName} onChange={e => setPathName(e.target.value)} placeholder="e.g. Main Road" />
                   </div>
                   <div className="flex gap-2">
@@ -1020,8 +1119,8 @@ const CampusMap = () => {
 
           {/* ── BOUNDARIES (admin) ── */}
           {activeTab === 'boundary' && isAdmin && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3 overflow-y-auto flex-1">
-              <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+            <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 shadow-sm p-4 flex flex-col gap-3 overflow-y-auto flex-1">
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-2">
                 <Square size={15} className="text-blue-500" /> Campus Boundaries
               </h3>
               {!drawingBoundary ? (
@@ -1034,7 +1133,7 @@ const CampusMap = () => {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 font-medium">
                     🖱️ Click on the map to define polygon corners.
                   </div>
-                  <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  <input className="w-full border border-gray-200 dark:border-surface-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-surface-dark dark:text-white"
                     value={boundaryName} onChange={e => setBoundaryName(e.target.value)} placeholder="Boundary Name" />
                   <div className="flex gap-2">
                     <button onClick={handleSaveBoundary} disabled={isSavingBoundary || boundaryPoints.length < 3 || !boundaryName.trim()}
@@ -1048,10 +1147,10 @@ const CampusMap = () => {
               )}
               <div className="overflow-y-auto flex-1 space-y-2 mt-1">
                 {boundaries.map(b => (
-                  <div key={b.id} className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 border border-blue-100">
-                    <Square size={13} className="text-blue-600 flex-shrink-0" />
-                    <div className="text-sm font-medium text-gray-800 truncate flex-1">{b.name}</div>
-                    <button onClick={() => handleDeleteBoundary(b.id)} className="p-1 rounded hover:bg-red-50 text-red-400"><Trash2 size={12} /></button>
+                  <div key={b.id} className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/30">
+                    <Square size={13} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate flex-1">{b.name}</div>
+                    <button onClick={() => handleDeleteBoundary(b.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/20 text-red-400 dark:text-red-400"><Trash2 size={12} /></button>
                   </div>
                 ))}
               </div>
@@ -1097,10 +1196,10 @@ const CampusMap = () => {
             {showPaths && paths.length > 0 && (
               <Source id="all-paths" type="geojson" data={pathsGeoJSON}>
                 <Layer id="paths-casing" source="all-paths" type="line"
-                  paint={{ 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.6 }}
+                  paint={{ 'line-color': '#ffffff', 'line-width': ['case', ['boolean', ['get', 'highlight'], false], 10, 6], 'line-opacity': 0.6 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
                 <Layer id="paths-line" source="all-paths" type="line"
-                  paint={{ 'line-color': '#f59e0b', 'line-width': 3, 'line-opacity': 0.9 }}
+                  paint={{ 'line-color': ['case', ['boolean', ['get', 'highlight'], false], '#22c55e', '#f59e0b'], 'line-width': ['case', ['boolean', ['get', 'highlight'], false], 6, 3], 'line-opacity': 0.9 }}
                   layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
               </Source>
             )}
@@ -1198,19 +1297,19 @@ const CampusMap = () => {
                     <img src={popupInfo.image_url} alt={popupInfo.location_name}
                       className="w-full h-28 object-cover rounded-lg mb-2" onError={e => e.target.style.display = 'none'} />
                   )}
-                  <h3 className="font-bold text-gray-900 text-base leading-tight mb-1">{popupInfo.location_name}</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight mb-1">{popupInfo.location_name}</h3>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
                       style={{ background: CATEGORY_META[popupInfo.category]?.bg, color: CATEGORY_META[popupInfo.category]?.color }}>
                       {popupInfo.category}
                     </span>
-                    {popupInfo.floor_number && <span className="text-xs text-gray-500">Floor {popupInfo.floor_number}</span>}
+                    {popupInfo.floor_number && <span className="text-xs text-gray-500 dark:text-gray-400">Floor {popupInfo.floor_number}</span>}
                   </div>
-                  {popupInfo.description && <p className="text-gray-600 text-xs mb-3">{popupInfo.description}</p>}
+                  {popupInfo.description && <p className="text-gray-600 dark:text-gray-300 text-xs mb-3">{popupInfo.description}</p>}
                   {(popupInfo.opening_hours?.text || popupInfo.is_accessible) && (
-                    <div className="flex flex-col gap-1 mb-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    <div className="flex flex-col gap-1 mb-3 bg-gray-50 dark:bg-surface-800 p-2 rounded-lg border border-gray-100 dark:border-surface-700">
                       {popupInfo.opening_hours?.text && (
-                        <div className="text-xs text-gray-700 font-medium whitespace-pre-wrap">⏱️ {popupInfo.opening_hours.text}</div>
+                        <div className="text-xs text-gray-700 dark:text-gray-300 font-medium whitespace-pre-wrap">⏱️ {popupInfo.opening_hours.text}</div>
                       )}
                       {popupInfo.is_accessible && (
                         <div className="text-xs text-green-700 font-medium">♿ Wheelchair Accessible</div>
@@ -1218,19 +1317,19 @@ const CampusMap = () => {
                     </div>
                   )}
                   <div className="flex gap-2 mb-2">
-                    <button className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
+                    <button className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20"
                       onClick={() => { setFromLoc(popupInfo); setActiveTab('navigate'); setPopupInfo(null); }}>Start here</button>
-                    <button className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100"
+                    <button className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20"
                       onClick={() => { setToLoc(popupInfo); setActiveTab('navigate'); setPopupInfo(null); }}>Go here</button>
                   </div>
                   {activeTab === 'pins' && isAdmin && (
                     <div className="flex gap-2 mb-2">
                       <button onClick={() => { setEditingLoc(popupInfo); setShowPinForm(true); setPopupInfo(null); }}
-                        className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 flex items-center justify-center gap-1">
+                        className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 flex items-center justify-center gap-1">
                         <Edit3 size={11} /> Edit
                       </button>
                       <button onClick={() => handleDeletePin(popupInfo)}
-                        className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-1">
+                        className="flex-1 text-xs font-semibold py-1.5 rounded-lg border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 flex items-center justify-center gap-1">
                         <Trash2 size={11} /> Delete
                       </button>
                     </div>
@@ -1245,21 +1344,21 @@ const CampusMap = () => {
           </Map>
 
           {/* Legend */}
-          <div className="absolute bottom-4 right-4 z-[400] bg-white/90 backdrop-blur shadow-lg rounded-xl p-3 border border-gray-100 hidden md:block">
-            <h4 className="font-bold text-gray-700 text-xs mb-2 flex items-center gap-1"><Layers size={11} /> Legend</h4>
+          <div className="absolute bottom-4 right-4 z-[400] bg-white/90 dark:bg-surface-dark/90 backdrop-blur shadow-lg rounded-xl p-3 border border-gray-100 dark:border-surface-800 hidden md:block">
+            <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs mb-2 flex items-center gap-1"><Layers size={11} /> Legend</h4>
             <ul className="space-y-1">
               {Object.entries(CATEGORY_META).map(([cat, meta]) => {
                 const Icon = meta.icon;
                 return (
-                  <li key={cat} className="flex items-center gap-2 text-xs text-gray-600">
+                  <li key={cat} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                     <Icon size={12} style={{ color: meta.color }} /> {meta.label}
                   </li>
                 );
               })}
-              <li className="flex items-center gap-2 text-xs text-gray-600 border-t border-gray-100 pt-1 mt-1">
+              <li className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-surface-800 pt-1 mt-1">
                 <div className="w-4 h-0.5 bg-yellow-400 border-t border-dashed border-yellow-400"></div> Walkable Path
               </li>
-              <li className="flex items-center gap-2 text-xs text-gray-600">
+              <li className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                 <div className="w-4 h-0.5 bg-cyan-400"></div> Active Route
               </li>
             </ul>

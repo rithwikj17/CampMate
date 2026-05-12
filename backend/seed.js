@@ -1,14 +1,6 @@
 require('dotenv').config();
-const { Pool } = require('pg');
+const db = require('./db');
 const bcrypt = require('bcrypt');
-
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'campmate'
-});
 
 async function seed() {
   console.log('🌱 Starting database seed...');
@@ -16,7 +8,7 @@ async function seed() {
   try {
     // 1. Clean existing tables (in correct foreign key order)
     console.log('🧹 Truncating existing tables...');
-    await pool.query(`
+    await db.query(`
       TRUNCATE TABLE 
         event_registrations, 
         club_members, 
@@ -34,7 +26,7 @@ async function seed() {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash('Test@1234', saltRounds);
 
-    const usersRes = await pool.query(`
+    const usersRes = await db.query(`
       INSERT INTO users (name, email, password_hash, role, bio) VALUES 
         ('Aryan Sharma', 'student@campmate.com', $1, 'Student', 'Just a regular student.'),
         ('Priya Reddy', 'club@campmate.com', $1, 'Club Member', 'Tech enthusiast & builder.'),
@@ -49,7 +41,7 @@ async function seed() {
 
     // 3. Insert Clubs
     console.log('⛺ Seeding Clubs...');
-    const clubsRes = await pool.query(`
+    const clubsRes = await db.query(`
       INSERT INTO clubs (club_name, description, created_by) VALUES 
         ('Coding Club', 'A community of passionate developers building cool things. Join us for hackathons and masterclasses!', $1),
         ('CCB', 'The heartbeat of cultural events at BVRIT! We orchestrate massive college fests, electrifying events, and serve as the vibrant soul of campus life!', $1),
@@ -74,7 +66,7 @@ async function seed() {
 
     // 4. Insert Club Members
     console.log('👥 Seeding Club Members...');
-    await pool.query(`
+    await db.query(`
       INSERT INTO club_members (user_id, club_id, role) VALUES 
         ($1, $2, 'Admin'),    -- Priya is Admin of Coding Club
         ($3, $2, 'Member'),   -- Aryan is Member of Coding Club
@@ -94,7 +86,7 @@ async function seed() {
     // Format dates to YYYY-MM-DD for Postgres
     const formatDate = (d) => d.toISOString().split('T')[0];
 
-    const eventsInserted = await pool.query(`
+    const eventsInserted = await db.query(`
       INSERT INTO events (title, description, date, time, venue, organizer_id, category, max_participants) VALUES 
         ('Hackathon 2026', 'A 24-hour coding sprint. Build next-gen web apps and win prizes.', $1, '09:00:00', 'Main Auditorium', $2, 'Technical', 100),
         ('AI Workshop', 'Hands-on session on building RAG pipelines with OpenAI.', $3, '14:00:00', 'Computer Lab 3', $2, 'Workshop', 50),
@@ -111,7 +103,7 @@ async function seed() {
     ]);
 
     // Insert Natyanandhana past event with poster
-    await pool.query(`
+    await db.query(`
       INSERT INTO events (title, description, date, time, venue, organizer_id, category, poster_url) VALUES 
         ('Nritya (Classical) – Athenes 2K26',
          'Natyanandhana proudly presented Dr. Sravya Manasa as the esteemed judge for the Nritya Classical dance competition at Athenes 2K26. An electrifying performance evening that celebrated the grace, tradition, and artistry of Indian classical dance forms at BVRIT.',
@@ -120,7 +112,7 @@ async function seed() {
     `, [natyanandhana.id]);
 
     // Insert CCB Dance Crew past event with poster
-    await pool.query(`
+    await db.query(`
       INSERT INTO events (title, description, date, time, venue, organizer_id, category, poster_url) VALUES 
         ('Nritya (Western) – Athenes 2K26',
          'CCB Dance Crew proudly presented SREE as the electrifying judge for the Nritya Western dance competition at Athenes 2K26. A high-energy showdown of contemporary and western dance styles that set the stage on fire at BVRIT.',
@@ -129,7 +121,7 @@ async function seed() {
     `, [ccbDanceCrew.id]);
 
     // Insert E-Cell past event with poster
-    await pool.query(`
+    await db.query(`
       INSERT INTO events (title, description, date, time, venue, organizer_id, category, poster_url) VALUES 
         ('E-Summit''26 – Summer Edition',
          'E-Cell BVRIT hosted the electrifying E-Summit''26 Summer Edition on 25th–26th March, featuring Investment Arena, Brand Wars, Ad Arena, Pitch Perfect, Panel Discussion, and IPL Auction. Led by E-Cell leads Rishi Srii Reddy D and Satya Sai, the 2-day entrepreneurship extravaganza brought together innovators, investors, and future leaders at BVRIT.',
@@ -141,7 +133,7 @@ async function seed() {
 
     // 6. Insert Event Registrations
     console.log('🎟️ Seeding Event Registrations...');
-    await pool.query(`
+    await db.query(`
       INSERT INTO event_registrations (user_id, event_id, status) VALUES 
         ($1, $4, 'Confirmed'), -- Student -> Hackathon
         ($1, $5, 'Confirmed'), -- Student -> AI Workshop
@@ -158,7 +150,7 @@ async function seed() {
 
     // 7. Insert Campus Locations (Around BVRIT Narsapur)
     console.log('📍 Seeding Campus Locations...');
-    await pool.query(`
+    await db.query(`
       INSERT INTO campus_locations (location_name, description, latitude, longitude) VALUES 
         ('Main Administration Block', 'Principal office, admin affairs, and fees submission.', 17.7265, 78.2542),
         ('Central Library', 'Three stories of engineering books, journals, and a digital library.', 17.7258, 78.2536),
@@ -174,7 +166,7 @@ async function seed() {
     process.exit(1);
   } finally {
     // End the pool to allow the script to exit gracefully
-    await pool.end();
+    process.exit(0);
     process.exit(0);
   }
 }

@@ -3,8 +3,9 @@ const router = express.Router();
 const pathController = require('../controllers/pathController');
 const { verifyToken, restrictTo } = require('../middleware/auth');
 
-router.get('/',      verifyToken, pathController.getAllPaths);
-router.post('/',     verifyToken, restrictTo('Administrator'), pathController.createPath);
-router.delete('/:id',verifyToken, restrictTo('Administrator'), pathController.deletePath);
+router.get('/',      pathController.getAllPaths);
+router.post('/',     pathController.createPath);
+router.put('/:id',   pathController.updatePath);
+router.delete('/:id', pathController.deletePath);
 
 module.exports = router;

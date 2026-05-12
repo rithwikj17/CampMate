@@ -7,6 +7,7 @@ import {
   Briefcase, Music, Trophy, Microscope
 } from 'lucide-react';
 import ClubDetailModal from '../components/ClubDetailModal';
+import API_BASE from '../api';
 
 // ── Mock Categories & Styles ────────────────────────────────────────────────
 const CATEGORIES = ['All', 'Tech', 'Arts', 'Business', 'Sports'];
@@ -21,12 +22,12 @@ const CATEGORY_ICONS = {
 };
 
 const CATEGORY_COLORS = {
-  Tech:     { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200'   },
-  Arts:     { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' },
-  Business: { bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200'  },
-  Sports:   { bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-200'  },
-  Science:  { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-200'   },
-  Other:    { bg: 'bg-gray-100',   text: 'text-gray-600',   border: 'border-gray-200'   },
+  Tech:     { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-blue-700 dark:text-blue-400',   border: 'border-blue-200 dark:border-blue-500/30'   },
+  Arts:     { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-500/30' },
+  Business: { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-700 dark:text-amber-400',  border: 'border-amber-200 dark:border-amber-500/30'  },
+  Sports:   { bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-700 dark:text-green-400',  border: 'border-green-200 dark:border-green-500/30'  },
+  Science:  { bg: 'bg-cyan-100 dark:bg-cyan-900/30',   text: 'text-cyan-700 dark:text-cyan-400',   border: 'border-cyan-200 dark:border-cyan-500/30'   },
+  Other:    { bg: 'bg-gray-100 dark:bg-surface-800',   text: 'text-gray-600 dark:text-gray-400',   border: 'border-gray-200 dark:border-surface-700'   },
 };
 
 const getCategoryStyle = (cat) => CATEGORY_COLORS[cat] || CATEGORY_COLORS.Other;
@@ -65,30 +66,30 @@ const CreateClubModal = ({ onClose, onCreate }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">Create New Club</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-500" />
+      <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-surface-800">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create New Club</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-lg transition-colors">
+            <X size={20} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Club Name *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Club Name *</label>
             <input required type="text" placeholder="e.g. Astronomy Club"
               value={form.name} onChange={set('name')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" />
+              className="w-full border border-gray-200 dark:border-surface-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-surface-dark dark:text-white transition-colors" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
             <textarea rows={4} placeholder="What is this club about?"
               value={form.description} onChange={set('description')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors resize-none" />
+              className="w-full border border-gray-200 dark:border-surface-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-surface-dark dark:text-white transition-colors resize-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
             <select value={form.category} onChange={set('category')}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors bg-white">
+              className="w-full border border-gray-200 dark:border-surface-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors bg-white dark:bg-surface-dark dark:text-white">
               {['Tech', 'Arts', 'Business', 'Sports', 'Science', 'Other'].map(c => (
                 <option key={c}>{c}</option>
               ))}
@@ -96,7 +97,7 @@ const CreateClubModal = ({ onClose, onCreate }) => {
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose}
-              className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+              className="flex-1 border border-gray-200 dark:border-surface-800 text-gray-700 dark:text-gray-300 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-800 transition-colors">
               Cancel
             </button>
             <button type="submit"
@@ -133,7 +134,7 @@ const Clubs = () => {
   useEffect(() => {
     const fetchClubs = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/clubs');
+        const response = await axios.get(`${API_BASE}/api/clubs`);
         if (response.data && response.data.data) {
           const mapped = response.data.data.map(c => ({
             ...c,
@@ -161,7 +162,7 @@ const Clubs = () => {
     setClubEvents([]);
     setEventsLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/clubs/${club.id}/events`);
+      const res = await axios.get(`${API_BASE}/api/clubs/${club.id}/events`);
       setClubEvents(res.data.data || []);
     } catch {
       setClubEvents([]);
@@ -226,12 +227,12 @@ const Clubs = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Campus Clubs</h1>
-          <p className="text-gray-500 mt-1">Connect with like-minded peers and explore your interests.</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Campus Clubs</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Connect with like-minded peers and explore your interests.</p>
         </div>
         <div className="flex items-center gap-3">
           {memberIds.size > 0 && (
-            <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-xl text-sm font-medium">
+            <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400 px-4 py-2 rounded-xl text-sm font-medium">
               <Users size={15} />
               In {memberIds.size} club{memberIds.size > 1 ? 's' : ''}
             </div>
@@ -254,7 +255,7 @@ const Clubs = () => {
           </div>
           <input type="text" placeholder="Search clubs or keywords..."
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors text-sm" />
+            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 dark:border-surface-800 rounded-xl bg-white dark:bg-surface-900/50 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors text-sm" />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
           <Filter className="h-4 w-4 text-gray-400 mr-1 shrink-0 hidden md:block" />
@@ -262,8 +263,8 @@ const Clubs = () => {
             <button key={cat} onClick={() => setCategoryFilter(cat)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 categoryFilter === cat
-                  ? 'bg-gray-900 text-white shadow-md'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  ? 'bg-gray-900 text-white shadow-md dark:bg-brand-600'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-surface-dark dark:text-gray-400 dark:hover:bg-surface-800 dark:border-surface-800'
               }`}>
               {cat}
             </button>
@@ -272,14 +273,14 @@ const Clubs = () => {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <span className="font-medium text-gray-900">{filteredClubs.length}</span>
+      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <span className="font-medium text-gray-900 dark:text-white">{filteredClubs.length}</span>
         club{filteredClubs.length !== 1 ? 's' : ''} found
         {categoryFilter !== 'All' && (
           <span className="flex items-center gap-1">
-            in <span className="font-semibold text-gray-800">{categoryFilter}</span>
+            in <span className="font-semibold text-gray-800 dark:text-gray-200">{categoryFilter}</span>
             <button onClick={() => setCategoryFilter('All')}
-              className="ml-1 text-gray-400 hover:text-gray-600 transition-colors">
+              className="ml-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
               <X size={14} />
             </button>
           </span>
@@ -290,28 +291,28 @@ const Clubs = () => {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 animate-pulse">
+            <div key={i} className="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-gray-100 dark:border-surface-800 animate-pulse">
               <div className="flex gap-4 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gray-200" />
+                <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-surface-800" />
                 <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-4 bg-gray-200 rounded w-2/3" />
-                  <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  <div className="h-4 bg-gray-200 dark:bg-surface-800 rounded w-2/3" />
+                  <div className="h-3 bg-gray-100 dark:bg-surface-700 rounded w-1/3" />
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="h-3 bg-gray-100 rounded" />
-                <div className="h-3 bg-gray-100 rounded w-5/6" />
+                <div className="h-3 bg-gray-100 dark:bg-surface-700 rounded" />
+                <div className="h-3 bg-gray-100 dark:bg-surface-700 rounded w-5/6" />
               </div>
             </div>
           ))}
         </div>
       ) : filteredClubs.length === 0 ? (
         <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-surface-800 mb-4">
             <Search className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900">No clubs found</h3>
-          <p className="text-gray-500 mt-1">Try a different search term or category.</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">No clubs found</h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Try a different search term or category.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -323,7 +324,7 @@ const Clubs = () => {
             return (
               <div key={club.id}
                 onClick={() => handleClubClick(club)}
-                className="bg-white rounded-2xl border border-gray-100 hover:shadow-xl hover:border-brand-200 transition-all duration-300 group flex flex-col h-full relative overflow-hidden cursor-pointer">
+                className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-surface-800 hover:shadow-xl hover:border-brand-200 dark:hover:border-brand-500/30 hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group flex flex-col h-full relative overflow-hidden cursor-pointer">
 
                 {/* Coloured top strip */}
                 <div className={`h-2 w-full bg-gradient-to-r ${cardGradient(club.name)}`} />
@@ -331,12 +332,12 @@ const Clubs = () => {
                 <div className="p-6 flex flex-col flex-grow">
                   {/* Top row */}
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xl shadow-inner">
+                    <div className="w-12 h-12 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold text-xl shadow-inner">
                       {(club.name && club.name.length > 0) ? club.name.charAt(0) : 'C'}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                       {isMember && (
-                        <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                        <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold px-2.5 py-1 rounded-full">
                           ✓ Joined
                         </span>
                       )}
@@ -347,19 +348,19 @@ const Clubs = () => {
                   </div>
 
                   {/* Name & Description */}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-600 transition-colors">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-600 transition-colors">
                     {club.name}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-6 flex-grow line-clamp-3">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-6 flex-grow line-clamp-3">
                     {club.description}
                   </p>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-surface-800">
                     {/* Live member count */}
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <Users size={15} className="text-brand-500" />
-                      <span className="font-bold text-gray-900">{club.members}</span>
+                      <span className="font-bold text-gray-900 dark:text-white">{club.members}</span>
                       <span>Members</span>
                     </div>
 
@@ -370,15 +371,15 @@ const Clubs = () => {
                         title={isMember ? 'Leave Club' : 'Join Club'}
                         className={`p-2 rounded-lg transition-colors ${
                           isMember
-                            ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
-                            : 'text-brand-600 bg-brand-50 hover:bg-brand-100'
+                            ? 'text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50'
+                            : 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-900/50'
                         }`}>
                         {isMember ? <UserMinus size={18} /> : <UserPlus size={18} />}
                       </button>
 
                       {/* View Details */}
                       <button
-                        className="text-gray-500 bg-gray-50 hover:bg-gray-100 p-2 rounded-lg transition-colors group-hover:bg-brand-50 group-hover:text-brand-600">
+                        className="text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-surface-800 hover:bg-gray-100 dark:hover:bg-surface-700 p-2 rounded-lg transition-colors group-hover:bg-brand-50 dark:group-hover:bg-brand-900/30 group-hover:text-brand-600 dark:group-hover:text-brand-400">
                         <ChevronRight size={18} />
                       </button>
                     </div>
@@ -401,6 +402,12 @@ const Clubs = () => {
           club={clubs.find(c => c.id === selectedClub.id) || selectedClub}
           events={clubEvents}
           loading={eventsLoading}
+          isMember={memberIds.has(selectedClub.id)}
+          onJoin={(clubId) => {
+            // Create a synthetic event object-ish for the toggle handler
+            const fakeEvent = { stopPropagation: () => {} };
+            handleToggle(fakeEvent, clubId);
+          }}
           onClose={() => { setSelectedClub(null); setClubEvents([]); }}
         />
       )}

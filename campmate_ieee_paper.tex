@@ -1,0 +1,127 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{hyperref}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{CampMate: A Cinematic, Interactive Digital Nervous System for Modern University Campuses}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Aryan Creator}
+\IEEEauthorblockA{\textit{Department of Computer Science} \\
+\textit{BVRIT}\\
+Hyderabad, India \\
+aryan.creator18@bvrit.edu.in}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Ayush}
+\IEEEauthorblockA{\textit{Department of Computer Science} \\
+\textit{BVRIT}\\
+Hyderabad, India \\
+ayush@bvrit.edu.in}
+}
+
+\maketitle
+
+\begin{abstract}
+As university campuses expand in physical size and operational complexity, students frequently struggle with efficient micro-navigation, discovering localized campus events, and accessing dynamic resources. Traditional mapping solutions, such as Google Maps, often lack the granularity to route pedestrians through internal campus walkways or into specific building blocks. This paper introduces CampMate, a comprehensive, web-based digital campus platform designed to function as a ``campus digital nervous system.'' Utilizing a modern technology stack comprising React.js, Node.js, PostgreSQL, and MapLibre GL JS, CampMate provides a cinematic, highly responsive user interface. Core technical contributions include a custom Dijkstra-based graph routing engine operating on admin-drawn geospatial infrastructure paths, integration of Turf.js for proximity snapping, strict Role-Based Access Control (RBAC) via JSON Web Tokens, and a centralized hub for dynamic club and event management. This paper details the system architecture, mathematical routing models, database schemas, and cinematic UI/UX design principles that demonstrate CampMate's effectiveness in resolving campus navigation and engagement challenges.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Campus Navigation, Web Mapping, MapLibre, React, Dijkstra Routing, GeoJSON, Interactive UI, Event Management, WebGL
+\end{IEEEkeywords}
+
+\section{Introduction}
+Modern university campuses are complex ecosystems consisting of academic blocks, administrative offices, sports complexes, and sprawling student hostels. Navigating these environments, especially for freshmen, faculty, and visiting guests, can be highly challenging due to the intricate network of internal pedestrian walkways that are not mapped by public GPS providers. Furthermore, student engagement relies heavily on effective, real-time communication regarding club activities, workshops, and campus events. Traditional solutions, such as physical signboards, mass emails, and static PDF maps, are insufficient and disjointed in a fast-paced academic environment.
+
+CampMate addresses this critical gap by providing a real-time, interactive digital map and student dashboard unified into a single ecosystem. By integrating geospatial mapping with a comprehensive content management system, CampMate empowers students to seamlessly route themselves from point A to point B within the campus, track active clubs, and RSVP to upcoming events. Uniquely, the platform is designed with a premium, ``cinematic'' dark-themed user interface, utilizing micro-animations, glassmorphism, and responsive layouts to ensure a high degree of user retention and engagement.
+
+\section{Related Work}
+Existing commercial mapping platforms, such as Google Maps and Apple Maps, excel at macro-navigation (city-to-city or street-to-street) but often treat university campuses as generic green spaces or large, un-routable polygons. While some universities have deployed custom applications, they frequently rely on static image overlays or basic point-to-point vector lines that ignore actual walking paths. CampMate advances the state-of-the-art by implementing an entirely custom, graph-based routing layer atop a WebGL mapping canvas, allowing administrators to continually update infrastructure without waiting for third-party map providers.
+
+\section{System Architecture}
+CampMate is engineered using a robust, decoupled client-server architecture. This design ensures high availability, scalability, and a seamless developer experience.
+
+\subsection{Frontend Architecture}
+The client-side application is built using React 18, orchestrated by the Vite build tool for optimized hot-module replacement and rapid bundling. Styling is handled exclusively via Tailwind CSS, enforcing a strict, utility-first design system that guarantees visual consistency across the cinematic dark mode interface. 
+
+The map interface leverages MapLibre GL JS via the \texttt{react-map-gl} wrapper. MapLibre is an open-source mapping library that renders highly performant Vector Tiles using WebGL. This allows CampMate to support complex map interactions, such as conditional hover states over custom-drawn campus paths, rendering 3D building data, and displaying dynamic navigation polylines at 60 frames per second. Furthermore, Turf.js is integrated into the client to perform complex geospatial mathematical operations, such as calculating the nearest coordinate on a polyline to a user's clicked location.
+
+\subsection{Backend API Layer}
+The backend service operates on a Node.js runtime utilizing the Express.js web framework. It exposes a RESTful API architecture that handles all client requests, authenticates users, and interfaces with the relational database. The controllers are strictly decoupled from routing logic to maintain clean code boundaries. Security is enforced via JSON Web Tokens (JWT) embedded in HTTP headers, while sensitive data, such as passwords, are hashed using bcrypt before storage.
+
+\subsection{Database Schema and Storage}
+PostgreSQL is utilized as the primary relational database, leveraging the \texttt{pg} driver for asynchronous queries. The schema is highly normalized and includes specialized tables for core geospatial and relational entities:
+\begin{itemize}
+    \item \textbf{campus\_locations}: Stores point-of-interest metadata including \texttt{latitude}, \texttt{longitude}, \texttt{category} (e.g., Academic, Hostel), \texttt{floor\_number}, and accessibility flags.
+    \item \textbf{campus\_paths}: Stores complex infrastructure polylines as stringified JSON arrays of coordinates, enabling the system to rebuild the routing graph dynamically.
+    \item \textbf{users} and \textbf{clubs}: Manages authentication credentials, user roles (\textit{Administrator} vs \textit{Student}), and hierarchical club structures.
+\end{itemize}
+
+\subsection{Cloud Deployment and Edge Execution}
+CampMate is engineered for modern cloud infrastructure, leveraging Vercel for the frontend and Render for the backend. A significant challenge in cloud deployments is IP-blocking by external geospatial APIs. To overcome this, CampMate employs a distributed edge-proxy execution model. Rather than relying solely on the Node.js backend for external data ingestion, the React client fetches high-bandwidth third-party data directly within the browser, subsequently injecting the refined results into the backend for secure processing and persistence. This strategy bypasses server-side IP restrictions and drastically reduces backend compute loads.
+
+\section{Algorithmic Implementations}
+
+\subsection{Custom Graph Construction and Dijkstra Routing}
+The most significant technical challenge resolved by CampMate is the micro-navigation engine. To facilitate this, the system dynamically generates a mathematical graph \( G = (V, E) \) where vertices \( V \) are the waypoints of the drawn paths, and edges \( E \) are the segments connecting them, weighted by geographical distance.
+
+When a user selects a source location (Point A) and a destination (Point B), the algorithm executes the following sequence:
+\begin{enumerate}
+    \item \textbf{Proximity Snapping:} Using Turf.js (\texttt{nearestPointOnLine}), the system identifies the closest nodes \( N_A \) and \( N_B \) on the existing path graph to the user's arbitrary coordinates.
+    \item \textbf{Graph Traversal:} The client executes a custom implementation of Dijkstra's shortest path algorithm. A priority queue evaluates the cumulative Haversine distance from \( N_A \) to all reachable adjacent nodes until \( N_B \) is discovered.
+    \item \textbf{Path Reconstruction:} The optimal array of coordinates is extracted and formatted as a GeoJSON \texttt{LineString} feature.
+    \item \textbf{Map Rendering:} MapLibre dynamically updates its source data, triggering a WebGL paint operation that highlights the route with a glowing, high-contrast casing line.
+\end{enumerate}
+
+\subsection{Dynamic Data Editing and Overlays}
+Administrators possess the ability to draw new paths directly onto the map using a custom toolset. As points are clicked, temporary GeoJSON state arrays are updated. Upon saving, the coordinates are sent to the \texttt{POST /api/paths} endpoint. The client immediately fetches the updated dataset, rebuilding the graph entirely in the browser without requiring a page refresh.
+
+\section{Core Application Modules}
+
+\subsection{Interactive Campus Map \& Admin Tools}
+The map interface serves a dual purpose. For students, it is an exploration and navigation tool. For administrators, it transforms into an infrastructure management console. Through the sidebar interface, admins can invoke the \texttt{PUT /api/paths/:id} endpoint to rename existing walkways or the \texttt{DELETE} endpoint to bulk-clear obsolete routes. Building markers, color-coded by category (e.g., Red for Sports, Blue for Academic), feature interactive popups displaying opening hours and accessibility metrics.
+
+\subsection{Club and Event Dashboard}
+Beyond navigation, CampMate acts as the social nervous system of the campus. The event feed utilizes a responsive masonry layout enriched with AI-curated accents to highlight high-priority workshops. Students can toggle attendance, and the backend tracks RSVPs in real-time, allowing club leads to estimate event turnout accurately.
+
+\subsection{The Ambient Chatbot Widget}
+To assist users, a Chatbot widget is integrated directly over the map canvas. Rather than utilizing a traditional, obtrusive chat window, CampMate implements an ``ambient orb'' trigger. Through precise CSS isolation (\texttt{pointer-events-none} on wrappers and \texttt{pointer-events-auto} on the orb), the chatbot remains accessible without intercepting mouse events intended for the underlying MapLibre canvas, solving a critical dead-zone UX issue identified during beta testing.
+
+\subsection{Extensibility: Macro-Scale Mapping}
+While optimized primarily for localized campus micro-navigation, the underlying WebGL and React architecture is highly extensible. CampMate includes a prototype macro-scale visualization module designed for geospatial analytics, such as fetching satellite telemetry APIs to project orbital trajectories (e.g., space debris tracking) onto the global map projection. This integration proves the platform's capacity to seamlessly transition from sub-meter pedestrian pathfinding to planetary-scale data visualization.
+
+\section{UI/UX and Cinematic Design}
+A primary focus during the development of CampMate was the aesthetic and tactile feel of the application. Deviating from standard, utilitarian academic portals, CampMate employs a rigorous ``cinematic'' design language.
+
+Key design implementations include:
+\begin{itemize}
+    \item \textbf{Glassmorphism and Dark Mode:} The UI utilizes semi-transparent overlay panels backed by CSS \texttt{backdrop-blur} filters. A deep, high-contrast dark mode minimizes eye strain and draws focus directly to the illuminated map vectors.
+    \item \textbf{Event-Driven Map Highlighting:} Hovering over a saved path in the sidebar dynamically interacts with the WebGL map canvas. The system updates the \texttt{selectedPathId} state, evaluating a conditional \texttt{paint} expression in MapLibre to instantly increase the stroke width and brightness of the corresponding polyline.
+    \item \textbf{Fluid Transitions:} Leveraging the \texttt{framer-motion} library, page transitions, modal appearances, and form reveals are smoothly animated, providing spatial continuity to the user.
+\end{itemize}
+
+\section{Conclusion and Future Work}
+CampMate successfully demonstrates the efficacy of combining modern web mapping technologies, advanced graph algorithms, and interactive community dashboards to create a holistic campus platform. By implementing a custom graph-based routing system utilizing Turf.js and Dijkstra's algorithm over MapLibre, the project solves the localized micro-navigation problem faced by university students. The cinematic UI establishes a premium benchmark for academic software.
+
+Future enhancements for CampMate include live peer-to-peer location sharing via WebSockets, indoor floor-plan routing using 3D extrusions, and augmented reality (AR) camera overlays to project navigation paths directly into the physical world.
+
+\begin{thebibliography}{00}
+\bibitem{b1} MapLibre, ``MapLibre GL JS Documentation,'' [Online]. Available: https://maplibre.org/maplibre-gl-js/docs/
+\bibitem{b2} Facebook Open Source, ``React – A JavaScript library for building user interfaces,'' [Online]. Available: https://reactjs.org/
+\bibitem{b3} PostgreSQL Global Development Group, ``PostgreSQL: The World's Most Advanced Open Source Relational Database,'' [Online]. Available: https://www.postgresql.org/
+\bibitem{b4} Dijkstra, E. W., ``A note on two problems in connexion with graphs,'' Numerische Mathematik, vol. 1, pp. 269–271, 1959.
+\bibitem{b5} Turf.js, ``Advanced geospatial analysis for browsers and Node.js,'' [Online]. Available: https://turfjs.org/
+\bibitem{b6} Tailwind Labs, ``Tailwind CSS: Rapidly build modern websites without ever leaving your HTML,'' [Online]. Available: https://tailwindcss.com/
+\end{thebibliography}
+
+\end{document}

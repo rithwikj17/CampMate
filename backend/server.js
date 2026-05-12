@@ -19,7 +19,22 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(cors({ origin: true, credentials: true })); // Important for cookies
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -36,6 +51,39 @@ app.use('/api/notifications', notificationRoutes);
 
 app.get('/', (req, res) => {
   res.send('CampMate API is running');
+});
+
+// Temporary route to initialize DB from browser
+app.get('/api/setup-database-now', (req, res) => {
+  const { exec } = require('child_process');
+  exec('npm run setup-db', (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).send(`Error: ${error.message}\nStderr: ${stderr}`);
+      }
+      res.send(`<h1>Database Initialized!</h1><pre>${stdout}</pre>`);
+  });
+});
+
+// Temporary route to import OSM map data
+app.get('/api/import-map-now', (req, res) => {
+  const { exec } = require('child_process');
+  exec('npm run import-map', (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).send(`Error: ${error.message}\nStderr: ${stderr}`);
+      }
+      res.send(`<h1>Map Data Imported!</h1><pre>${stdout}</pre>`);
+  });
+});
+
+// Temporary route to initialize DB schema safely
+app.get('/api/init-db-now', (req, res) => {
+  const { exec } = require('child_process');
+  exec('npm run init-db', (error, stdout, stderr) => {
+      if (error) {
+          return res.status(500).send(`Error: ${error.message}\nStderr: ${stderr}`);
+      }
+      res.send(`<h1>Schema Initialized Safely!</h1><pre>${stdout}</pre>`);
+  });
 });
 
 // Global Error Handler
